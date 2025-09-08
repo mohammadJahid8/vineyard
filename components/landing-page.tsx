@@ -9,8 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserButton, SignInButton, SignUpButton } from '@clerk/nextjs';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import {
   Check,
   Grape,
@@ -31,7 +30,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 export default function LandingPage() {
-  const { isSignedIn } = useUser();
+  const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -51,7 +50,7 @@ export default function LandingPage() {
 
             {/* Desktop Navigation */}
             <div className='hidden md:flex items-center space-x-4'>
-              {isSignedIn ? (
+              {session ? (
                 <>
                   <Link href='/plans'>
                     <Button
@@ -67,26 +66,30 @@ export default function LandingPage() {
                       <ArrowRight className='w-4 h-4 ml-2' />
                     </Button>
                   </Link>
-                  <UserButton
-                    appearance={{
-                      elements: {
-                        avatarBox: 'w-10 h-10',
-                      },
-                    }}
-                  />
+                  <div className='flex items-center space-x-2'>
+                    <Button
+                      onClick={() =>
+                        (window.location.href = '/api/auth/signout')
+                      }
+                      variant='ghost'
+                      size='sm'
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <SignInButton mode='modal'>
+                  <Link href='/sign-in'>
                     <Button variant='ghost' className='text-gray-700'>
                       Sign In
                     </Button>
-                  </SignInButton>
-                  <SignUpButton mode='modal'>
+                  </Link>
+                  <Link href='/sign-up'>
                     <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
                       Get Started
                     </Button>
-                  </SignUpButton>
+                  </Link>
                 </>
               )}
             </div>
@@ -111,7 +114,7 @@ export default function LandingPage() {
           {mobileMenuOpen && (
             <div className='md:hidden mt-4 pb-4 border-t pt-4'>
               <div className='flex flex-col space-y-2'>
-                {isSignedIn ? (
+                {session ? (
                   <>
                     <Link
                       href='/plans'
@@ -136,16 +139,16 @@ export default function LandingPage() {
                   </>
                 ) : (
                   <>
-                    <SignInButton mode='modal'>
-                      <Button variant='ghost' className='w-full text-gray-700'>
+                    <Link href='/sign-in'>
+                      <Button variant='ghost' className='text-gray-700'>
                         Sign In
                       </Button>
-                    </SignInButton>
-                    <SignUpButton mode='modal'>
-                      <Button className='w-full bg-vineyard-500 hover:bg-vineyard-600 text-white'>
+                    </Link>
+                    <Link href='/sign-up'>
+                      <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
                         Get Started
                       </Button>
-                    </SignUpButton>
+                    </Link>
                   </>
                 )}
               </div>
@@ -181,7 +184,7 @@ export default function LandingPage() {
           />
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center mb-12'>
-            {isSignedIn ? (
+            {session ? (
               <Link href='/explore'>
                 <Button
                   size='lg'
@@ -192,15 +195,11 @@ export default function LandingPage() {
                 </Button>
               </Link>
             ) : (
-              <SignUpButton mode='modal'>
-                <Button
-                  size='lg'
-                  className='bg-vineyard-500 hover:bg-vineyard-600 text-white px-8 py-4 text-lg'
-                >
-                  Start Free Tour
-                  <ArrowRight className='w-5 h-5 ml-2' />
+              <Link href='/sign-up'>
+                <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
+                  Sign Up
                 </Button>
-              </SignUpButton>
+              </Link>
             )}
           </div>
 
@@ -364,7 +363,7 @@ export default function LandingPage() {
             Join thousands of wine lovers who have discovered their perfect
             vineyard experiences with our expert guidance.
           </p>
-          {isSignedIn ? (
+          {session ? (
             <Link href='/plans'>
               <Button
                 size='lg'
@@ -375,7 +374,7 @@ export default function LandingPage() {
               </Button>
             </Link>
           ) : (
-            <SignUpButton mode='modal'>
+            <Link href='/sign-up'>
               <Button
                 size='lg'
                 className='bg-white text-vineyard-600 hover:bg-gray-100 px-8 py-4 text-lg'
@@ -383,7 +382,7 @@ export default function LandingPage() {
                 Start Your Free Tour
                 <ArrowRight className='w-5 h-5 ml-2' />
               </Button>
-            </SignUpButton>
+            </Link>
           )}
         </div>
       </section>

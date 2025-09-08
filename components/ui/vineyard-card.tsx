@@ -34,7 +34,9 @@ export function VineyardCard({
   isInTrip = false,
   className,
 }: VineyardCardProps) {
+  console.log('🚀 ~ VineyardCard ~ vineyard:', vineyard);
   const [showOffers, setShowOffers] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(false);
 
   const highlights = [
     vineyard.reason_1,
@@ -111,9 +113,11 @@ export function VineyardCard({
                   ({vineyard.g_ratig_user.split('/')[1]?.trim()})
                 </span>
               </div>
-              <div className='flex items-center text-vineyard-600 font-medium'>
-                {/* <Euro className='h-4 w-4 mr-1' /> */}
-                {formatCostRange()}
+              <div className='flex flex-col text-vineyard-600 font-medium'>
+                <span>{formatCostRange()}</span>
+                <span className='text-xs text-gray-500 font-normal'>
+                  cost per adult
+                </span>
               </div>
             </div>
           </div>
@@ -156,20 +160,33 @@ export function VineyardCard({
         {/* Highlights */}
         {highlights.length > 0 && (
           <div className='mb-4'>
-            <h4 className='text-sm font-semibold text-gray-900 mb-2'>
-              Highlights
-            </h4>
-            <ul className='space-y-1'>
-              {highlights.slice(0, 3).map((highlight, index) => (
-                <li
-                  key={index}
-                  className='text-sm text-gray-600 flex items-start'
-                >
-                  <span className='mr-2'>•</span>
-                  <span>{highlight}</span>
-                </li>
-              ))}
-            </ul>
+            <div className='flex items-center justify-between mb-3'>
+              <h4 className='text-sm font-semibold text-gray-900'>
+                Highlights ({highlights.length})
+              </h4>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setShowHighlights(!showHighlights)}
+                className='text-vineyard-600 hover:text-vineyard-700'
+              >
+                {showHighlights ? 'Hide' : 'Show'}
+              </Button>
+            </div>
+
+            {showHighlights && (
+              <ul className='space-y-1'>
+                {highlights.map((highlight, index) => (
+                  <li
+                    key={index}
+                    className='text-sm text-gray-600 flex items-start'
+                  >
+                    <span className='mr-2'>•</span>
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
@@ -194,11 +211,16 @@ export function VineyardCard({
               <div className='space-y-3'>
                 {offers.map((offer, index) => (
                   <div key={index} className='bg-gray-50 rounded-lg p-3 border'>
-                    <div className='flex items-start justify-between mb-2'>
-                      <h5 className='font-medium text-sm text-gray-900'>
-                        {offer.title}
-                      </h5>
-                      <div className='text-right'>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex-1 pr-3'>
+                        <h5 className='font-medium text-sm text-gray-900 mb-1'>
+                          {offer.title}
+                        </h5>
+                        <p className='text-xs text-gray-600'>
+                          {offer.experience}
+                        </p>
+                      </div>
+                      <div className='text-right flex-shrink-0'>
                         <div className='text-sm font-semibold text-vineyard-600'>
                           €{offer.cost_per_adult}
                         </div>
@@ -208,19 +230,6 @@ export function VineyardCard({
                         </div>
                       </div>
                     </div>
-                    <p className='text-xs text-gray-600 mb-2'>
-                      {offer.experience}
-                    </p>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      className='w-full text-xs h-7'
-                      onClick={() =>
-                        onAddToTrip?.(vineyard.vineyard_id, `offer-${index}`)
-                      }
-                    >
-                      Add This Offer
-                    </Button>
                   </div>
                 ))}
               </div>

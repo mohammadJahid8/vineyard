@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserButton } from '@clerk/nextjs';
+import { UserMenu } from '@/components/ui/user-menu';
 import {
   Check,
   Grape,
@@ -24,20 +24,82 @@ import {
 import { planOptions } from '@/lib/data';
 
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 
 export default function PlansPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
+  const [checkingPlan, setCheckingPlan] = useState(true);
 
-  const handleSelectPlan = (planId: string) => {
-    if (planId === 'free') {
-      router.push('/explore');
-    } else {
-      // For now, show coming soon - future: navigate to payment screen
-      alert(
-        `${
-          planOptions.find((p) => p.id === planId)?.name
-        } plan coming soon! Upgrade functionality will be available soon.`
-      );
+  // Check if user already has a plan
+  useEffect(() => {
+    const checkUserPlan = async () => {
+      if (session?.user?.email) {
+        try {
+          const response = await fetch('/api/users/plan');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data?.selectedPlan) {
+              setUserPlan(data.data.selectedPlan);
+              // If user has a plan and is coming from vineyard selection, redirect to explore
+              if (data.data.selectedPlan) {
+                router.push('/explore');
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check user plan:', error);
+        } finally {
+          setCheckingPlan(false);
+        }
+      } else {
+        setCheckingPlan(false);
+      }
+    };
+
+    checkUserPlan();
+  }, [session, router]);
+
+  const handleSelectPlan = async (planId: string) => {
+    if (!session?.user?.email) {
+      router.push('/sign-in');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/users/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      if (response.ok) {
+        if (planId === 'free') {
+          router.push('/explore');
+        } else {
+          // For now, show coming soon - future: navigate to payment screen
+          alert(
+            `${
+              planOptions.find((p) => p.id === planId)?.name
+            } plan coming soon! Upgrade functionality will be available soon.`
+          );
+        }
+      } else {
+        throw new Error('Failed to save plan');
+      }
+    } catch (error) {
+      console.error('Error selecting plan:', error);
+      alert('Failed to save plan selection. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,6 +131,18 @@ export default function PlansPage() {
     return <span className='font-medium text-xs'>{value}</span>;
   };
 
+  // Show loading while checking plan
+  if (checkingPlan) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 flex items-center justify-center'>
+        <div className='flex items-center gap-3'>
+          <div className='animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-vineyard-500'></div>
+          <span className='text-lg text-gray-600'>Checking your plan...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100'>
       {/* Header */}
@@ -86,13 +160,7 @@ export default function PlansPage() {
                 </p>
               </div>
             </div>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-10 h-10',
-                },
-              }}
-            />
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -205,6 +273,7 @@ export default function PlansPage() {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   onClick={() => handleSelectPlan(plan.id)}
+                  disabled={loading}
                 >
                   {plan.id === 'free' ? (
                     <>
@@ -410,6 +479,7 @@ export default function PlansPage() {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   onClick={() => handleSelectPlan(plan.id)}
+                  disabled={loading}
                 >
                   {plan.id === 'free' ? 'Start Free' : 'Coming Soon'}
                 </Button>

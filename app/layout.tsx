@@ -2,8 +2,8 @@ import type React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ClerkProvider } from '@clerk/nextjs';
 import { TripProvider } from '@/lib/context/trip-context';
+import { SessionProvider } from '@/components/session-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,14 +19,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider afterSignOutUrl='/' afterSignInUrl='/plans'>
-      <html lang='en'>
-        <body className={inter.className}>
+    <html lang='en'>
+      <body className={inter.className}>
+        <SessionProvider>
           <TripProvider>
             <div className='min-h-screen pb-16'>{children}</div>
           </TripProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </SessionProvider>
+      </body>
+    </html>
   );
 }

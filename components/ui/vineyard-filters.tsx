@@ -25,26 +25,26 @@ interface VineyardFiltersProps {
 }
 
 const areaOptions = [
-  { value: 'all', label: 'All Areas' },
-  { value: '1. Reims City (by foot)', label: 'Reims City' },
-  { value: '2. Reims Region (by car)', label: 'Reims Region' },
-  { value: '3. Epernay City (by foot)', label: 'Epernay City' },
-  { value: '4. Epernay Region (by car)', label: 'Epernay Region' },
+  { value: 'reims city', label: 'Reims City' },
+  { value: 'reims mountain', label: 'Reims Mountain' },
+  { value: 'epernay city', label: 'Epernay City' },
+  { value: 'near epernay', label: 'Near Epernay' },
+  { value: 'marne valley', label: 'Marne Valley' },
+  { value: 'côte des blancs', label: 'Côte des Blancs' },
+  { value: 'further south', label: 'Further South' },
 ];
 
 const typeOptions = [
-  { value: 'all', label: 'All Types' },
   { value: 'International', label: 'International' },
   { value: 'Boutique', label: 'Boutique' },
   { value: 'Grower', label: 'Grower' },
 ];
 
 const costOptions = [
-  { value: 'all', label: 'All Costs' },
   { value: 'under-25', label: 'Under €25' },
-  { value: '25-50', label: '€25 - €50' },
-  { value: '50-100', label: '€50 - €100' },
-  { value: 'over-100', label: 'Over €100' },
+  { value: '25-40', label: '€25 - €40' },
+  { value: '40-70', label: '€40 - €70' },
+  { value: '70+', label: '€70+' },
 ];
 
 const experienceOptions = [
@@ -66,9 +66,9 @@ export function VineyardFilters({
   const getInitialFilters = (): FilterState => {
     const experienceParam = searchParams.get('experience');
     return {
-      area: searchParams.get('area') || 'all',
-      type: searchParams.get('type') || 'all',
-      cost: searchParams.get('cost') || 'all',
+      area: searchParams.get('area') || '',
+      type: searchParams.get('type') || '',
+      cost: searchParams.get('cost') || '',
       experience: experienceParam ? experienceParam.split(',') : [],
       search: searchParams.get('search') || '',
     };
@@ -80,6 +80,7 @@ export function VineyardFilters({
     useState<FilterState>(getInitialFilters);
   const [searchInput, setSearchInput] = useState(getInitialFilters().search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
   const filtersRef = useRef(appliedFilters);
 
   // Keep ref in sync with applied filters
@@ -91,10 +92,10 @@ export function VineyardFilters({
   const updateURL = (newFilters: FilterState) => {
     const params = new URLSearchParams();
 
-    // Only add non-default values to URL
-    if (newFilters.area !== 'all') params.set('area', newFilters.area);
-    if (newFilters.type !== 'all') params.set('type', newFilters.type);
-    if (newFilters.cost !== 'all') params.set('cost', newFilters.cost);
+    // Only add non-empty values to URL
+    if (newFilters.area !== '') params.set('area', newFilters.area);
+    if (newFilters.type !== '') params.set('type', newFilters.type);
+    if (newFilters.cost !== '') params.set('cost', newFilters.cost);
     if (newFilters.experience.length > 0)
       params.set('experience', newFilters.experience.join(','));
     if (newFilters.search) params.set('search', newFilters.search);
@@ -105,16 +106,51 @@ export function VineyardFilters({
     router.replace(newUrl, { scroll: false });
   };
 
+  // Check if required filters are selected in temp filters
+  const hasRequiredTempFilters = useMemo(() => {
+    return (
+      tempFilters.area !== '' &&
+      tempFilters.type !== '' &&
+      tempFilters.cost !== '' &&
+      tempFilters.experience.length > 0
+    );
+  }, [tempFilters]);
+
+  // Get missing filter names for dynamic error message
+  const getMissingRequiredFilters = useMemo(() => {
+    const missing = [];
+    if (tempFilters.area === '') missing.push('Area');
+    if (tempFilters.type === '') missing.push('Type');
+    if (tempFilters.cost === '') missing.push('Cost');
+    if (tempFilters.experience.length === 0) missing.push('Experience Type');
+    return missing;
+  }, [tempFilters]);
+
   // Apply filters when Go button is clicked
   const applyFilters = useCallback(() => {
     const finalFilters = { ...tempFilters, search: searchInput };
+
+    // Check if required filters are selected
+    if (!hasRequiredTempFilters) {
+      setShowValidationError(true);
+      return;
+    }
+
+    setShowValidationError(false);
     setAppliedFilters(finalFilters);
     updateURL(finalFilters);
     onFiltersChange(finalFilters);
-  }, [tempFilters, searchInput, updateURL, onFiltersChange]);
+  }, [
+    tempFilters,
+    searchInput,
+    hasRequiredTempFilters,
+    updateURL,
+    onFiltersChange,
+  ]);
 
   // Update temporary filters (not applied until Go is clicked)
   const updateTempFilters = useCallback((newFilters: Partial<FilterState>) => {
+    setShowValidationError(false); // Clear validation error when filters change
     setTempFilters((prev) => {
       const updated = { ...prev, ...newFilters };
       // Only update if there's an actual change
@@ -136,9 +172,9 @@ export function VineyardFilters({
 
   const clearFilters = useCallback(() => {
     const clearedFilters: FilterState = {
-      area: 'all',
-      type: 'all',
-      cost: 'all',
+      area: '',
+      type: '',
+      cost: '',
       experience: [],
       search: '',
     };
@@ -150,9 +186,9 @@ export function VineyardFilters({
   }, [updateURL, onFiltersChange]);
 
   const hasActiveFilters =
-    (appliedFilters.area && appliedFilters.area !== 'all') ||
-    (appliedFilters.type && appliedFilters.type !== 'all') ||
-    (appliedFilters.cost && appliedFilters.cost !== 'all') ||
+    (appliedFilters.area && appliedFilters.area !== '') ||
+    (appliedFilters.type && appliedFilters.type !== '') ||
+    (appliedFilters.cost && appliedFilters.cost !== '') ||
     appliedFilters.experience.length > 0 ||
     (appliedFilters.search && appliedFilters.search !== '');
 
@@ -179,20 +215,25 @@ export function VineyardFilters({
     () => (
       <>
         {/* Search Bar */}
-        <div className='relative mb-4'>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
-          <Input
-            key='vineyard-search-input'
-            placeholder='Search vineyards...'
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className='pl-10'
-          />
-        </div>
 
         {/* Filter Row */}
-        <div className='grid grid-cols-1 md:grid-cols-5 gap-4 mb-4'>
+        <div className='grid grid-cols-1 md:grid-cols-6 gap-4 mb-4'>
           {/* Area Filter */}
+          <div>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Search
+            </Label>
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+              <Input
+                key='vineyard-search-input'
+                placeholder='Search vineyards...'
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className='pl-10'
+              />
+            </div>
+          </div>
           <div>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Area
@@ -262,7 +303,6 @@ export function VineyardFilters({
           <div className='flex items-end space-x-2 md:col-span-2'>
             <Button
               onClick={applyFilters}
-              disabled={!hasUnappliedChanges}
               className='bg-vineyard-500 hover:bg-vineyard-600 flex-1'
             >
               Go
@@ -277,6 +317,16 @@ export function VineyardFilters({
             </Button>
           </div>
         </div>
+
+        {/* Validation Error */}
+        {showValidationError && (
+          <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+            <p className='text-sm text-red-600 font-medium'>
+              Please select the following filters before searching:{' '}
+              {getMissingRequiredFilters.join(', ')}
+            </p>
+          </div>
+        )}
 
         {/* Experience Checkboxes */}
         <div className='mb-4'>
@@ -307,7 +357,7 @@ export function VineyardFilters({
         {/* Active Filters */}
         {hasActiveFilters && (
           <div className='flex flex-wrap gap-2 mb-4'>
-            {appliedFilters.area && appliedFilters.area !== 'all' && (
+            {appliedFilters.area && appliedFilters.area !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -320,7 +370,7 @@ export function VineyardFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, area: 'all' };
+                    const clearedFilters = { ...appliedFilters, area: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -329,7 +379,7 @@ export function VineyardFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.type && appliedFilters.type !== 'all' && (
+            {appliedFilters.type && appliedFilters.type !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -342,7 +392,7 @@ export function VineyardFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, type: 'all' };
+                    const clearedFilters = { ...appliedFilters, type: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -351,7 +401,7 @@ export function VineyardFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.cost && appliedFilters.cost !== 'all' && (
+            {appliedFilters.cost && appliedFilters.cost !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -364,7 +414,7 @@ export function VineyardFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, cost: 'all' };
+                    const clearedFilters = { ...appliedFilters, cost: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -454,9 +504,9 @@ export function VineyardFilters({
           {hasActiveFilters &&
             `(${
               [
-                appliedFilters.area !== 'all' ? appliedFilters.area : null,
-                appliedFilters.type !== 'all' ? appliedFilters.type : null,
-                appliedFilters.cost !== 'all' ? appliedFilters.cost : null,
+                appliedFilters.area !== '' ? appliedFilters.area : null,
+                appliedFilters.type !== '' ? appliedFilters.type : null,
+                appliedFilters.cost !== '' ? appliedFilters.cost : null,
                 appliedFilters.search !== '' ? appliedFilters.search : null,
                 ...appliedFilters.experience,
               ].filter(Boolean).length

@@ -1,11 +1,12 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth/config';
 import ExplorePage from '@/components/explore-page';
 import { Vineyard, Offer } from '@/lib/types-vineyard';
 
 async function getVineyardsData(): Promise<Vineyard[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3003';
-  const response = await fetch(`${baseUrl}/vineyards.json`, {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/vineyards`, {
     cache: 'force-cache', // Cache the data
   });
 
@@ -13,12 +14,13 @@ async function getVineyardsData(): Promise<Vineyard[]> {
     throw new Error('Failed to fetch vineyards data');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.data || [];
 }
 
 async function getOffersData(): Promise<Offer[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3003';
-  const response = await fetch(`${baseUrl}/offers.json`, {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/offers`, {
     cache: 'force-cache', // Cache the data
   });
 
@@ -26,21 +28,25 @@ async function getOffersData(): Promise<Offer[]> {
     throw new Error('Failed to fetch offers data');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.data || [];
 }
 
 export default async function Explore() {
-  const user = await currentUser();
+  const session = await getServerSession(authOptions);
 
-  if (!user) {
-    redirect('/sign-in');
-  }
+  // if (!session) {
+  //   redirect('/sign-in');
+  // }
 
   // Fetch data server-side using fetch
   const [vineyards, offers] = await Promise.all([
     getVineyardsData(),
     getOffersData(),
   ]);
+
+  // console.log('🚀 ~ Explore ~ vineyards:', vineyards);
+  // console.log('🚀 ~ Explore ~ offers:', offers);
 
   return <ExplorePage vineyards={vineyards} offers={offers} />;
 }

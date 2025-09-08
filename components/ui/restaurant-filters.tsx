@@ -24,7 +24,6 @@ interface RestaurantFiltersProps {
 }
 
 const typeOptions = [
-  { value: 'all', label: 'All Types (Google Titles)' },
   { value: 'French', label: 'French' },
   { value: 'Brasserie', label: 'Brasserie' },
   { value: 'Wine Bar', label: 'Wine Bar' },
@@ -33,27 +32,25 @@ const typeOptions = [
 ];
 
 const costOptions = [
-  { value: 'all', label: 'All Costs' },
-  { value: 'under-25', label: '€ (Under 25€pp)' },
-  { value: '25-40', label: '€€ (Under 40€pp)' },
-  { value: '40-70', label: '€€€ (Under 70€pp)' },
+  { value: 'under-25', label: 'Under €25' },
+  { value: '25-40', label: '€25 - €40' },
+  { value: '40-70', label: '€40 - €70' },
+  { value: '70+', label: '€70+' },
 ];
 
 const distanceOptions = [
-  { value: 'all', label: 'All Distances' },
   { value: 'under-2', label: 'Under 2km' },
   { value: '2-30', label: 'Up to 30km' },
 ];
 
 const locationOptions = [
-  { value: 'all', label: 'All Locations' },
-  { value: '1', label: '1' },
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '4', label: '4' },
-  { value: '5', label: '5' },
-  { value: '6', label: '6' },
-  { value: '7', label: '7' },
+  { value: 'reims city', label: 'Reims City' },
+  { value: 'reims mountain', label: 'Reims Mountain' },
+  { value: 'epernay city', label: 'Epernay City' },
+  { value: 'near epernay', label: 'Near Epernay' },
+  { value: 'marne valley', label: 'Marne Valley' },
+  { value: 'côte des blancs', label: 'Côte des Blancs' },
+  { value: 'further south', label: 'Further South' },
 ];
 
 const startingPointOptions = [
@@ -72,12 +69,12 @@ export function RestaurantFilters({
   // Initialize filters from URL parameters
   const getInitialFilters = (): RestaurantFilterState => {
     return {
-      area: searchParams.get('area') || 'all',
-      type: searchParams.get('type') || 'all',
-      cost: searchParams.get('cost') || 'all',
+      area: searchParams.get('area') || '',
+      type: searchParams.get('type') || '',
+      cost: searchParams.get('cost') || '',
       rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
-      distance: searchParams.get('distance') || 'all',
+      distance: searchParams.get('distance') || '',
       startingPoint: searchParams.get('startingPoint') || 'all',
     };
   };
@@ -88,6 +85,7 @@ export function RestaurantFilters({
     useState<RestaurantFilterState>(getInitialFilters);
   const [searchInput, setSearchInput] = useState(getInitialFilters().search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
   const filtersRef = useRef(appliedFilters);
 
   // Keep ref in sync with applied filters
@@ -100,14 +98,11 @@ export function RestaurantFilters({
     const params = new URLSearchParams();
 
     // Only add non-default values to URL
-    if (newFilters.area !== 'all') params.set('area', newFilters.area);
-    if (newFilters.type !== 'all') params.set('type', newFilters.type);
-    if (newFilters.cost !== 'all') params.set('cost', newFilters.cost);
+    if (newFilters.area !== '') params.set('area', newFilters.area);
+    if (newFilters.type !== '') params.set('type', newFilters.type);
+    if (newFilters.cost !== '') params.set('cost', newFilters.cost);
     if (newFilters.rating !== 'all') params.set('rating', newFilters.rating);
-    if (newFilters.distance !== 'all')
-      params.set('distance', newFilters.distance);
-    if (newFilters.startingPoint !== 'all')
-      params.set('startingPoint', newFilters.startingPoint);
+    if (newFilters.distance !== '') params.set('distance', newFilters.distance);
     if (newFilters.search) params.set('search', newFilters.search);
 
     const paramString = params.toString();
@@ -116,17 +111,50 @@ export function RestaurantFilters({
     router.replace(newUrl, { scroll: false });
   };
 
+  // Check if required filters are selected in temp filters
+  const hasRequiredTempFilters = useMemo(() => {
+    return (
+      tempFilters.area !== '' &&
+      tempFilters.type !== '' &&
+      tempFilters.cost !== ''
+    );
+  }, [tempFilters]);
+
+  // Get missing filter names for dynamic error message
+  const getMissingRequiredFilters = useMemo(() => {
+    const missing = [];
+    if (tempFilters.area === '') missing.push('Area');
+    if (tempFilters.type === '') missing.push('Type');
+    if (tempFilters.cost === '') missing.push('Cost');
+    return missing;
+  }, [tempFilters]);
+
   // Apply filters when Go button is clicked
   const applyFilters = useCallback(() => {
     const finalFilters = { ...tempFilters, search: searchInput };
+
+    // Check if required filters are selected
+    if (!hasRequiredTempFilters) {
+      setShowValidationError(true);
+      return;
+    }
+
+    setShowValidationError(false);
     setAppliedFilters(finalFilters);
     updateURL(finalFilters);
     onFiltersChange(finalFilters);
-  }, [tempFilters, searchInput, updateURL, onFiltersChange]);
+  }, [
+    tempFilters,
+    searchInput,
+    hasRequiredTempFilters,
+    updateURL,
+    onFiltersChange,
+  ]);
 
   // Update temporary filters (not applied until Go is clicked)
   const updateTempFilters = useCallback(
     (newFilters: Partial<RestaurantFilterState>) => {
+      setShowValidationError(false); // Clear validation error when filters change
       setTempFilters((prev) => {
         const updated = { ...prev, ...newFilters };
         // Only update if there's an actual change
@@ -150,12 +178,12 @@ export function RestaurantFilters({
 
   const clearFilters = useCallback(() => {
     const clearedFilters: RestaurantFilterState = {
-      area: 'all',
-      type: 'all',
-      cost: 'all',
+      area: '',
+      type: '',
+      cost: '',
       rating: 'all',
       search: '',
-      distance: 'all',
+      distance: '',
       startingPoint: 'all',
     };
     setAppliedFilters(clearedFilters);
@@ -166,11 +194,11 @@ export function RestaurantFilters({
   }, [updateURL, onFiltersChange]);
 
   const hasActiveFilters =
-    (appliedFilters.area && appliedFilters.area !== 'all') ||
-    (appliedFilters.type && appliedFilters.type !== 'all') ||
-    (appliedFilters.cost && appliedFilters.cost !== 'all') ||
+    (appliedFilters.area && appliedFilters.area !== '') ||
+    (appliedFilters.type && appliedFilters.type !== '') ||
+    (appliedFilters.cost && appliedFilters.cost !== '') ||
     (appliedFilters.rating && appliedFilters.rating !== 'all') ||
-    (appliedFilters.distance && appliedFilters.distance !== 'all') ||
+    (appliedFilters.distance && appliedFilters.distance !== '') ||
     (appliedFilters.startingPoint && appliedFilters.startingPoint !== 'all') ||
     (appliedFilters.search && appliedFilters.search !== '');
 
@@ -202,11 +230,33 @@ export function RestaurantFilters({
         </div>
 
         {/* Filter Row */}
-        <div className='grid grid-cols-1 md:grid-cols-6 gap-4 mb-4'>
+        <div className='grid grid-cols-1 md:grid-cols-5 gap-4 mb-4'>
+          {/* Location Filter */}
+          <div>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Area
+            </Label>
+            <Select
+              value={tempFilters.area}
+              onValueChange={(value) => updateTempFilters({ area: value })}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select area' />
+              </SelectTrigger>
+              <SelectContent>
+                {locationOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Type Filter */}
           <div>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Type (Google Titles)
+              Type
             </Label>
             <Select
               value={tempFilters.type}
@@ -228,14 +278,14 @@ export function RestaurantFilters({
           {/* Cost Filter */}
           <div>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Avg. Cost
+              Cost
             </Label>
             <Select
               value={tempFilters.cost}
               onValueChange={(value) => updateTempFilters({ cost: value })}
             >
               <SelectTrigger className='w-full'>
-                <SelectValue placeholder='Select cost' />
+                <SelectValue placeholder='Select cost range' />
               </SelectTrigger>
               <SelectContent>
                 {costOptions.map((option) => (
@@ -269,57 +319,10 @@ export function RestaurantFilters({
             </Select>
           </div>
 
-          {/* Location Filter */}
-          <div>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Location
-            </Label>
-            <Select
-              value={tempFilters.area}
-              onValueChange={(value) => updateTempFilters({ area: value })}
-            >
-              <SelectTrigger className='w-full'>
-                <SelectValue placeholder='Select location' />
-              </SelectTrigger>
-              <SelectContent>
-                {locationOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Starting Point Filter */}
-          <div>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Starting Point
-            </Label>
-            <Select
-              value={tempFilters.startingPoint}
-              onValueChange={(value) =>
-                updateTempFilters({ startingPoint: value })
-              }
-            >
-              <SelectTrigger className='w-full'>
-                <SelectValue placeholder='Select starting point' />
-              </SelectTrigger>
-              <SelectContent>
-                {startingPointOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Action Buttons */}
           <div className='flex items-end space-x-2'>
             <Button
               onClick={applyFilters}
-              disabled={!hasUnappliedChanges}
               className='bg-vineyard-500 hover:bg-vineyard-600 flex-1'
             >
               Go
@@ -335,15 +338,25 @@ export function RestaurantFilters({
           </div>
         </div>
 
+        {/* Validation Error */}
+        {showValidationError && (
+          <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+            <p className='text-sm text-red-600 font-medium'>
+              Please select the following filters before searching:{' '}
+              {getMissingRequiredFilters.join(', ')}
+            </p>
+          </div>
+        )}
+
         {/* Active Filters */}
         {hasActiveFilters && (
           <div className='flex flex-wrap gap-2 mb-4'>
-            {appliedFilters.area && appliedFilters.area !== 'all' && (
+            {appliedFilters.area && appliedFilters.area !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
               >
-                Location:{' '}
+                Area:{' '}
                 {
                   locationOptions.find(
                     (opt) => opt.value === appliedFilters.area
@@ -352,7 +365,7 @@ export function RestaurantFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, area: 'all' };
+                    const clearedFilters = { ...appliedFilters, area: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -361,7 +374,7 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.type && appliedFilters.type !== 'all' && (
+            {appliedFilters.type && appliedFilters.type !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -374,7 +387,7 @@ export function RestaurantFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, type: 'all' };
+                    const clearedFilters = { ...appliedFilters, type: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -383,7 +396,7 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.cost && appliedFilters.cost !== 'all' && (
+            {appliedFilters.cost && appliedFilters.cost !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -396,7 +409,7 @@ export function RestaurantFilters({
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {
-                    const clearedFilters = { ...appliedFilters, cost: 'all' };
+                    const clearedFilters = { ...appliedFilters, cost: '' };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
                     updateURL(clearedFilters);
@@ -405,7 +418,7 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.distance && appliedFilters.distance !== 'all' && (
+            {appliedFilters.distance && appliedFilters.distance !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -421,7 +434,7 @@ export function RestaurantFilters({
                   onClick={() => {
                     const clearedFilters = {
                       ...appliedFilters,
-                      distance: 'all',
+                      distance: '',
                     };
                     setAppliedFilters(clearedFilters);
                     setTempFilters(clearedFilters);
@@ -431,33 +444,6 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.startingPoint &&
-              appliedFilters.startingPoint !== 'all' && (
-                <Badge
-                  variant='secondary'
-                  className='bg-vineyard-100 text-vineyard-800'
-                >
-                  Starting Point:{' '}
-                  {
-                    startingPointOptions.find(
-                      (opt) => opt.value === appliedFilters.startingPoint
-                    )?.label
-                  }
-                  <X
-                    className='ml-1 h-3 w-3 cursor-pointer'
-                    onClick={() => {
-                      const clearedFilters = {
-                        ...appliedFilters,
-                        startingPoint: 'all',
-                      };
-                      setAppliedFilters(clearedFilters);
-                      setTempFilters(clearedFilters);
-                      updateURL(clearedFilters);
-                      onFiltersChange(clearedFilters);
-                    }}
-                  />
-                </Badge>
-              )}
             {appliedFilters.search && appliedFilters.search !== '' && (
               <Badge
                 variant='secondary'
@@ -515,12 +501,10 @@ export function RestaurantFilters({
           {hasActiveFilters &&
             `(${
               [
-                appliedFilters.area !== 'all' ? appliedFilters.area : null,
-                appliedFilters.type !== 'all' ? appliedFilters.type : null,
-                appliedFilters.cost !== 'all' ? appliedFilters.cost : null,
-                appliedFilters.distance !== 'all'
-                  ? appliedFilters.distance
-                  : null,
+                appliedFilters.area !== '' ? appliedFilters.area : null,
+                appliedFilters.type !== '' ? appliedFilters.type : null,
+                appliedFilters.cost !== '' ? appliedFilters.cost : null,
+                appliedFilters.distance !== '' ? appliedFilters.distance : null,
                 appliedFilters.startingPoint !== 'all'
                   ? appliedFilters.startingPoint
                   : null,

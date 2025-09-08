@@ -1,4 +1,4 @@
-import { SignUp } from '@clerk/nextjs';
+import SignUpForm from '@/components/auth/sign-up-form';
 
 export default function SignUpPage() {
   return (
@@ -8,21 +8,7 @@ export default function SignUpPage() {
           <h1 className='text-3xl font-bold text-gray-900 mb-2'>Get Started</h1>
           <p className='text-gray-600'>Create your account</p>
         </div>
-        <SignUp
-          appearance={{
-            elements: {
-              rootBox: 'mx-auto',
-              card: 'shadow-xl border-0 bg-white',
-              headerTitle: 'hidden',
-              headerSubtitle: 'hidden',
-              socialButtonsBlockButton:
-                'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
-              formButtonPrimary:
-                'bg-vineyard-500 hover:bg-vineyard-600 text-white',
-              footerActionLink: 'text-vineyard-600 hover:text-vineyard-700',
-            },
-          }}
-        />
+        <SignUpForm />
       </div>
     </div>
   );

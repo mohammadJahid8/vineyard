@@ -1,4 +1,4 @@
-import { SignIn } from '@clerk/nextjs';
+import SignInForm from '@/components/auth/sign-in-form';
 
 export default function SignInPage() {
   return (
@@ -10,21 +10,7 @@ export default function SignInPage() {
           </h1>
           <p className='text-gray-600'>Sign in to your account</p>
         </div>
-        <SignIn
-          appearance={{
-            elements: {
-              rootBox: 'mx-auto',
-              card: 'shadow-xl border-0 bg-white',
-              headerTitle: 'hidden',
-              headerSubtitle: 'hidden',
-              socialButtonsBlockButton:
-                'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
-              formButtonPrimary:
-                'bg-vineyard-500 hover:bg-vineyard-600 text-white',
-              footerActionLink: 'text-vineyard-600 hover:text-vineyard-700',
-            },
-          }}
-        />
+        <SignInForm />
       </div>
     </div>
   );

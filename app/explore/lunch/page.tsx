@@ -1,23 +1,34 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { authOptions } from '@/lib/auth/config';
 import LunchPage from '@/components/lunch-page';
 import { Restaurant } from '@/lib/types-vineyard';
 
-export default async function Lunch() {
-  const user = await currentUser();
+async function getRestaurantsData(): Promise<Restaurant[]> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/restaurants`, {
+    cache: 'force-cache', // Cache the data
+  });
 
-  if (!user) {
-    redirect('/sign-in');
+  if (!response.ok) {
+    throw new Error('Failed to fetch restaurants data');
   }
+
+  const result = await response.json();
+  return result.data || [];
+}
+
+export default async function Lunch() {
+  const session = await getServerSession(authOptions);
+
+  // if (!session) {
+  //   redirect('/sign-in');
+  // }
 
   // Load restaurant data
   let restaurants: Restaurant[] = [];
   try {
-    const filePath = join(process.cwd(), 'public', 'restaurants.json');
-    const fileContents = readFileSync(filePath, 'utf8');
-    restaurants = JSON.parse(fileContents);
+    restaurants = await getRestaurantsData();
   } catch (error) {
     console.error('Failed to load restaurants:', error);
   }

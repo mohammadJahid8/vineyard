@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { UserButton } from '@clerk/nextjs';
+import { UserMenu } from '@/components/ui/user-menu';
 import {
   Grape,
   FileText,
@@ -41,13 +41,7 @@ export default function ItineraryPage() {
                 <p className='text-sm text-gray-600'>Your saved plans</p>
               </div>
             </div>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-10 h-10',
-                },
-              }}
-            />
+            <UserMenu />
           </div>
         </div>
       </header>

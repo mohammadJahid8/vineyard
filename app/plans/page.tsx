@@ -1,11 +1,12 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth/config';
 import PlansPage from '@/components/plans-page';
 
 export default async function Plans() {
-  const user = await currentUser();
+  const session = await getServerSession(authOptions);
 
-  if (!user) {
+  if (!session) {
     redirect('/sign-in');
   }
 

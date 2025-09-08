@@ -1,24 +1,17 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Stepper } from '@/components/ui/stepper';
 import { RestaurantFilters } from '@/components/ui/restaurant-filters';
 import { RestaurantCard } from '@/components/ui/restaurant-card';
 import { PaginationCustom } from '@/components/ui/pagination-custom';
-import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { Button } from '@/components/ui/button';
-import { UserButton } from '@clerk/nextjs';
-import { Grape, Utensils } from 'lucide-react';
+import { NavigationWarning } from '@/components/ui/navigation-warning';
+import VineyardTourLayout from '@/components/layouts/vineyard-tour-layout';
+import { Utensils } from 'lucide-react';
 import { Restaurant, RestaurantFilterState } from '@/lib/types-vineyard';
 import { useTrip } from '@/lib/context/trip-context';
 import { useRouter } from 'next/navigation';
-
-const steps = [
-  { id: 'vineyard', title: 'Vineyard', href: '/explore' },
-  { id: 'lunch', title: 'Lunch', href: '/explore/lunch' },
-  { id: 'daytrip', title: 'Day Trip', href: '/explore/day-trip' },
-];
 
 const ITEMS_PER_PAGE = 12;
 
@@ -30,7 +23,8 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentPage = parseInt(searchParams.get('page') || '1');
-  const { trip, addRestaurant, removeRestaurant } = useTrip();
+  const { trip, addRestaurant, removeRestaurant, hasUnsavedChanges } =
+    useTrip();
   const [filters, setFilters] = useState<RestaurantFilterState>({
     area: 'all',
     type: 'all',
@@ -49,93 +43,129 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     []
   );
 
+  // Check if user has selected all required filters
+  const hasAllRequiredFilters = useMemo(() => {
+    return filters.area !== '' && filters.type !== '' && filters.cost !== '';
+  }, [filters]);
+
+  // Get missing filter names
+  const getMissingFilters = useMemo(() => {
+    const missing = [];
+    if (filters.area === '') missing.push('Area');
+    if (filters.type === '') missing.push('Type');
+    if (filters.cost === '') missing.push('Cost');
+    return missing;
+  }, [filters]);
+
   // Filter restaurants
   const filteredRestaurants = useMemo(() => {
-    return restaurants.filter((restaurant) => {
-      // Search filter
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        const restaurantName = restaurant.restaurants?.toLowerCase() || '';
-        const subRegion = restaurant.sub_region?.toLowerCase() || '';
-        const type = restaurant.actual_type?.toLowerCase() || '';
+    // Don't show any restaurants if all required filters are not selected
+    if (!hasAllRequiredFilters) {
+      return [];
+    }
 
+    return restaurants
+      .filter((restaurant) => {
+        // Search filter
+        if (filters.search) {
+          const searchTerm = filters.search.toLowerCase();
+          const restaurantName = restaurant.restaurants?.toLowerCase() || '';
+          const subRegion = restaurant.sub_region?.toLowerCase() || '';
+          const type = restaurant.actual_type?.toLowerCase() || '';
+
+          if (
+            !restaurantName.includes(searchTerm) &&
+            !subRegion.includes(searchTerm) &&
+            !type.includes(searchTerm)
+          ) {
+            return false;
+          }
+        }
+
+        // Area filter - use partial matching on sub_region
+        if (filters.area && filters.area !== '') {
+          const subRegion = restaurant.sub_region?.toLowerCase() || '';
+          const filterArea = filters.area.toLowerCase();
+          if (!subRegion.includes(filterArea)) {
+            return false;
+          }
+        }
+
+        // Type filter
         if (
-          !restaurantName.includes(searchTerm) &&
-          !subRegion.includes(searchTerm) &&
-          !type.includes(searchTerm)
+          filters.type &&
+          filters.type !== '' &&
+          (restaurant.actual_type || '') !== filters.type
         ) {
           return false;
         }
-      }
 
-      // Area filter
-      if (
-        filters.area &&
-        filters.area !== 'all' &&
-        (restaurant.sub_region || '') !== filters.area
-      ) {
-        return false;
-      }
+        // Cost filter
+        if (filters.cost && filters.cost !== '') {
+          const cost = restaurant.avg_est_lunch_cost;
+          if (cost == null || cost === undefined) return false;
 
-      // Type filter
-      if (
-        filters.type &&
-        filters.type !== 'all' &&
-        (restaurant.actual_type || '') !== filters.type
-      ) {
-        return false;
-      }
-
-      // Cost filter
-      if (filters.cost && filters.cost !== 'all') {
-        const cost = restaurant.avg_est_lunch_cost;
-        if (cost == null || cost === undefined) return false;
-
-        switch (filters.cost) {
-          case 'under-25':
-            if (cost >= 25) return false;
-            break;
-          case '25-40':
-            if (cost < 25 || cost > 40) return false;
-            break;
-          case '40-70':
-            if (cost < 40 || cost > 70) return false;
-            break;
+          switch (filters.cost) {
+            case 'under-25':
+              if (cost >= 25) return false;
+              break;
+            case '25-40':
+              if (cost < 25 || cost > 40) return false;
+              break;
+            case '40-70':
+              if (cost < 40 || cost > 70) return false;
+              break;
+            case '70+':
+              if (cost < 70) return false;
+              break;
+          }
         }
-      }
 
-      // Rating filter (removed since not in the new design)
-      if (filters.rating && filters.rating !== 'all') {
-        const rating = restaurant.g_rating;
-        if (rating == null || rating === undefined) return false;
+        // Rating filter (removed since not in the new design)
+        if (filters.rating && filters.rating !== 'all') {
+          const rating = restaurant.g_rating;
+          if (rating == null || rating === undefined) return false;
 
-        switch (filters.rating) {
-          case '4-plus':
-            if (rating < 4.0) return false;
-            break;
-          case '4.5-plus':
-            if (rating < 4.5) return false;
-            break;
-          case '3.5-plus':
-            if (rating < 3.5) return false;
-            break;
+          switch (filters.rating) {
+            case '4-plus':
+              if (rating < 4.0) return false;
+              break;
+            case '4.5-plus':
+              if (rating < 4.5) return false;
+              break;
+            case '3.5-plus':
+              if (rating < 3.5) return false;
+              break;
+          }
         }
-      }
 
-      // Distance filter (placeholder logic - would need actual distance calculation)
-      if (filters.distance && filters.distance !== 'all') {
-        // This would require implementing actual distance calculation
-        // For now, we'll just pass through all restaurants
-      }
+        // Distance filter (placeholder logic - would need actual distance calculation)
+        if (filters.distance && filters.distance !== 'all') {
+          // This would require implementing actual distance calculation
+          // For now, we'll just pass through all restaurants
+        }
 
-      // Starting Point filter (placeholder logic)
-      if (filters.startingPoint && filters.startingPoint !== 'all') {
-        // This would require context of the user's current location or vineyard selection
-        // For now, we'll just pass through all restaurants
-      }
+        // Starting Point filter (placeholder logic)
+        if (filters.startingPoint && filters.startingPoint !== 'all') {
+          // This would require context of the user's current location or vineyard selection
+          // For now, we'll just pass through all restaurants
+        }
 
-      return true;
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by Google rating (higher first)
+        const ratingA =
+          typeof a.g_rating === 'string'
+            ? parseFloat(a.g_rating)
+            : a.g_rating || 0;
+        const ratingB =
+          typeof b.g_rating === 'string'
+            ? parseFloat(b.g_rating)
+            : b.g_rating || 0;
+        return ratingB - ratingA;
+      })
+      .slice(0, 5); // Limit to top 5 restaurants
   }, [restaurants, filters]);
 
   // Pagination
@@ -152,8 +182,8 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
 
     if (restaurant) {
       addRestaurant(restaurant);
-      // Navigate to day trip page to show the added restaurant
-      router.push('/explore/day-trip');
+      // Navigate to plan page to show the added restaurant
+      router.push('/explore/review');
     }
   };
 
@@ -163,37 +193,19 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     }
   };
 
+  useEffect(() => {
+    if (!trip.vineyards.length) {
+      router.push('/explore');
+    }
+  }, [trip.vineyards.length, router]);
+
   return (
-    <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 pb-20'>
-      {/* Header */}
-      <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40'>
-        <div className='container mx-auto px-4 py-4'>
-          <div className='flex justify-between items-center'>
-            <div className='flex items-center space-x-3'>
-              <Grape className='h-8 w-8 text-vineyard-500' />
-              <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
-                  Vineyard Tour Planner
-                </h1>
-                <p className='text-sm text-gray-600'>
-                  Plan your perfect wine tour experience
-                </p>
-              </div>
-            </div>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-10 h-10',
-                },
-              }}
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* Stepper */}
-      <Stepper steps={steps} currentStep='lunch' />
-
+    <VineyardTourLayout
+      currentStep='lunch'
+      title='Lunch Selection'
+      subtitle='Choose a restaurant for your wine tour'
+    >
+      <NavigationWarning />
       {/* Filters */}
       <div className='container mx-auto px-4'>
         <RestaurantFilters onFiltersChange={handleFiltersChange} />
@@ -211,14 +223,23 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
               {filteredRestaurants.length !== 1 ? 's' : ''} found
             </p>
           </div>
-          {trip.restaurant && (
-            <Button
-              className='bg-vineyard-500 hover:bg-vineyard-600'
-              onClick={() => router.push('/explore/day-trip')}
-            >
-              View Trip
-            </Button>
-          )}
+          <div className='flex items-center gap-4'>
+            {/* {trip.vineyards.length > 0 && (
+              <p className='text-sm text-vineyard-600'>
+                {trip.vineyards.length}/3 vineyards selected
+              </p>
+            )} */}
+            {(trip.restaurant || trip.vineyards.length > 0) && (
+              <Button
+                className='bg-vineyard-500 hover:bg-vineyard-600'
+                onClick={() => router.push('/explore/review')}
+              >
+                Next: Review
+                {trip.restaurant && trip.vineyards.length > 0 && ' ✓'}
+                {hasUnsavedChanges && ' ⚠️'}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Restaurant Grid */}
@@ -249,34 +270,45 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
             <div className='mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit'>
               <Utensils className='h-8 w-8 text-gray-400' />
             </div>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>
-              No restaurants found
-            </h3>
-            <p className='text-gray-600 mb-4'>
-              Try adjusting your filters to see more results.
-            </p>
-            <Button
-              variant='outline'
-              onClick={() =>
-                setFilters({
-                  area: 'all',
-                  type: 'all',
-                  cost: 'all',
-                  rating: 'all',
-                  search: '',
-                  distance: 'all',
-                  startingPoint: 'all',
-                })
-              }
-            >
-              Clear All Filters
-            </Button>
+            {!hasAllRequiredFilters ? (
+              <>
+                <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                  Select All Filters to Search
+                </h3>
+                <p className='text-gray-600 mb-4'>
+                  Please select the following filters to discover restaurants:{' '}
+                  {getMissingFilters.join(', ')}
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                  No restaurants found
+                </h3>
+                <p className='text-gray-600 mb-4'>
+                  Try adjusting your filters to see more results.
+                </p>
+                <Button
+                  variant='outline'
+                  onClick={() =>
+                    setFilters({
+                      area: '',
+                      type: '',
+                      cost: '',
+                      rating: 'all',
+                      search: '',
+                      distance: 'all',
+                      startingPoint: 'all',
+                    })
+                  }
+                >
+                  Clear All Filters
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
-    </div>
+    </VineyardTourLayout>
   );
 }
