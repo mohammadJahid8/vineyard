@@ -42,15 +42,7 @@ export async function GET(
       );
     }
 
-    // Check if plan is expired
-    if (plan.isExpired() && plan.status !== 'expired') {
-      await plan.expire();
-      return createErrorResponse(
-        ErrorType.GONE,
-        'Plan has expired',
-        HttpStatus.GONE
-      );
-    }
+    
 
     return createSuccessResponse({ plan }, 'Plan retrieved successfully');
   } catch (error) {
@@ -91,22 +83,14 @@ export async function PUT(
       );
     }
 
-    // Check if plan is expired
-    if (plan.isExpired() && plan.status !== 'expired') {
-      await plan.expire();
-      return createErrorResponse(
-        ErrorType.GONE,
-        'Plan has expired',
-        HttpStatus.GONE
-      );
-    }
+
 
     // Update plan fields
     if (vineyards && Array.isArray(vineyards)) {
-      if (vineyards.length > 3) {
+      if (vineyards.length > 10) {
         return createErrorResponse(
           ErrorType.VALIDATION_ERROR,
-          'Maximum 3 vineyards allowed',
+          'Maximum 10 vineyards allowed',
           HttpStatus.BAD_REQUEST
         );
       }
@@ -135,12 +119,7 @@ export async function PUT(
       plan.title = title;
     }
 
-    if (status && ['draft', 'confirmed'].includes(status)) {
-      plan.status = status;
-      if (status === 'confirmed' && !plan.confirmedAt) {
-        plan.confirmedAt = new Date();
-      }
-    }
+ 
 
     await plan.save();
 
@@ -167,7 +146,7 @@ export async function DELETE(
 
     await connectDB();
     
-    const plan = await Plan.findOne({
+    const plan = await Plan.find({
       _id: params.id,
       userId: session.user.id,
     });

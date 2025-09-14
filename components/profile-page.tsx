@@ -1,6 +1,7 @@
 'use client';
 
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { SimpleAccessGuard } from '@/components/simple-access-guard';
 import {
   Card,
   CardContent,
@@ -8,13 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { UserMenu } from '@/components/ui/user-menu';
 import { Badge } from '@/components/ui/badge';
 import { useSession } from 'next-auth/react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Grape, User, Crown, Star, Zap } from 'lucide-react';
+import { User, Crown, Star, Zap, Grape, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
@@ -22,6 +22,9 @@ export default function ProfilePage() {
   const [userPlan, setUserPlan] = useState<{
     selectedPlan?: string;
     planSelectedAt?: string;
+    subscriptionExpiresAt?: string;
+    isSubscriptionActive?: boolean;
+    hasAccess?: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +65,23 @@ export default function ProfilePage() {
     }
   };
 
+  const getTimeRemaining = () => {
+    if (!userPlan?.subscriptionExpiresAt) return 'No expiry';
+    const now = new Date();
+    const expiry = new Date(userPlan.subscriptionExpiresAt);
+    const diff = expiry.getTime() - now.getTime();
+
+    if (diff <= 0) return 'Expired';
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ${hours % 24}h left`;
+    if (hours > 0) return `${hours}h ${minutes % 60}m left`;
+    return `${minutes}m left`;
+  };
+
   const getPlanName = (planId?: string) => {
     switch (planId) {
       case 'free':
@@ -93,120 +113,119 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 pb-20'>
-      {/* Header */}
-      <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40'>
-        <div className='container mx-auto px-4 py-4'>
-          <div className='flex justify-between items-center'>
-            <div className='flex items-center space-x-3'>
-              <Grape className='h-8 w-8 text-vineyard-500' />
-              <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
-                  Vineyard Tour Planner
-                </h1>
-                <p className='text-sm text-gray-600'>Your profile settings</p>
+    <SimpleAccessGuard>
+      <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 pb-20 pt-8'>
+        {/* Content */}
+        <div className='container mx-auto px-4 py-8 max-w-2xl'>
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2'>
+                <User className='h-5 w-5' />
+                Profile Information
+              </CardTitle>
+              <CardDescription>
+                Manage your account settings and personal information.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='grid gap-4'>
+                <div className='grid gap-2'>
+                  <Label htmlFor='name'>Name</Label>
+                  <Input
+                    id='name'
+                    value={session?.user?.name || ''}
+                    placeholder='Your full name'
+                    disabled
+                  />
+                </div>
+                <div className='grid gap-2'>
+                  <Label htmlFor='email'>Email</Label>
+                  <Input
+                    id='email'
+                    type='email'
+                    value={session?.user?.email || ''}
+                    placeholder='your.email@example.com'
+                    disabled
+                  />
+                </div>
               </div>
-            </div>
-            <UserMenu />
-          </div>
-        </div>
-      </header>
 
-      {/* Content */}
-      <div className='container mx-auto px-4 py-8 max-w-2xl'>
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <User className='h-5 w-5' />
-              Profile Information
-            </CardTitle>
-            <CardDescription>
-              Manage your account settings and personal information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid gap-4'>
-              <div className='grid gap-2'>
-                <Label htmlFor='name'>Name</Label>
-                <Input
-                  id='name'
-                  value={session?.user?.name || ''}
-                  placeholder='Your full name'
-                  disabled
-                />
-              </div>
-              <div className='grid gap-2'>
-                <Label htmlFor='email'>Email</Label>
-                <Input
-                  id='email'
-                  type='email'
-                  value={session?.user?.email || ''}
-                  placeholder='your.email@example.com'
-                  disabled
-                />
-              </div>
-            </div>
+              {/* Subscription Plan */}
+              <div className='border-t pt-6'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <h3 className='text-lg font-semibold'>Subscription Plan</h3>
+                  {!loading && (
+                    <Badge className={getPlanColor(userPlan?.selectedPlan)}>
+                      <div className='flex items-center gap-1'>
+                        {getPlanIcon(userPlan?.selectedPlan)}
+                        {getPlanName(userPlan?.selectedPlan)}
+                      </div>
+                    </Badge>
+                  )}
+                </div>
 
-            {/* Subscription Plan */}
-            <div className='border-t pt-6'>
-              <div className='flex items-center gap-2 mb-3'>
-                <h3 className='text-lg font-semibold'>Subscription Plan</h3>
-                {!loading && (
-                  <Badge className={getPlanColor(userPlan?.selectedPlan)}>
-                    <div className='flex items-center gap-1'>
-                      {getPlanIcon(userPlan?.selectedPlan)}
-                      {getPlanName(userPlan?.selectedPlan)}
+                {loading ? (
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <div className='animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-vineyard-500'></div>
+                    Loading plan information...
+                  </div>
+                ) : userPlan?.selectedPlan ? (
+                  <div className='text-sm text-gray-600 space-y-2'>
+                    <p>
+                      Plan selected on:{' '}
+                      {userPlan.planSelectedAt
+                        ? new Date(userPlan.planSelectedAt).toLocaleDateString()
+                        : 'Unknown'}
+                    </p>
+                    <div className='flex items-center gap-2'>
+                      <Clock className='h-4 w-4' />
+                      <span
+                        className={`font-medium ${
+                          getTimeRemaining() === 'Expired'
+                            ? 'text-red-600'
+                            : getTimeRemaining().includes('m left') &&
+                              !getTimeRemaining().includes('h')
+                            ? 'text-amber-600'
+                            : 'text-green-600'
+                        }`}
+                      >
+                        {getTimeRemaining()}
+                      </span>
                     </div>
-                  </Badge>
+                    {userPlan.selectedPlan !== 'free' && (
+                      <p className='mt-1 text-blue-600'>
+                        Premium features are coming soon!
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className='text-sm text-gray-600'>
+                    <p>No subscription plan selected yet.</p>
+                    <Button
+                      className='mt-2 bg-vineyard-500 hover:bg-vineyard-600'
+                      size='sm'
+                      onClick={() => (window.location.href = '/plans')}
+                    >
+                      Choose a Plan
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              {loading ? (
-                <div className='flex items-center gap-2 text-sm text-gray-600'>
-                  <div className='animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-vineyard-500'></div>
-                  Loading plan information...
-                </div>
-              ) : userPlan?.selectedPlan ? (
-                <div className='text-sm text-gray-600'>
-                  <p>
-                    Plan selected on:{' '}
-                    {userPlan.planSelectedAt
-                      ? new Date(userPlan.planSelectedAt).toLocaleDateString()
-                      : 'Unknown'}
-                  </p>
-                  {userPlan.selectedPlan !== 'free' && (
-                    <p className='mt-1 text-blue-600'>
-                      Premium features are coming soon!
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className='text-sm text-gray-600'>
-                  <p>No subscription plan selected yet.</p>
-                  <Button
-                    className='mt-2 bg-vineyard-500 hover:bg-vineyard-600'
-                    size='sm'
-                    onClick={() => (window.location.href = '/plans')}
-                  >
-                    Choose a Plan
-                  </Button>
-                </div>
-              )}
-            </div>
+              <div className='pt-4'>
+                <p className='text-sm text-gray-600'>
+                  Profile information is automatically synced from your
+                  authentication provider. To update your information, please
+                  use your Google account settings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <div className='pt-4'>
-              <p className='text-sm text-gray-600'>
-                Profile information is automatically synced from your
-                authentication provider. To update your information, please use
-                your Google account settings.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Bottom Navigation */}
+        <BottomNavigation />
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
-    </div>
+    </SimpleAccessGuard>
   );
 }

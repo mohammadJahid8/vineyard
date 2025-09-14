@@ -217,22 +217,10 @@ export function RestaurantFilters({
   const FilterContent = useMemo(
     () => (
       <>
-        {/* Search Bar */}
-        <div className='relative mb-4'>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
-          <Input
-            key='restaurant-search-input'
-            placeholder='Search restaurants...'
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className='pl-10'
-          />
-        </div>
-
         {/* Filter Row */}
-        <div className='grid grid-cols-1 md:grid-cols-5 gap-4 mb-4'>
+        <div className='grid grid-cols-1 md:grid-cols-12 gap-4 mb-4'>
           {/* Location Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Area
             </Label>
@@ -254,7 +242,7 @@ export function RestaurantFilters({
           </div>
 
           {/* Type Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Type
             </Label>
@@ -276,7 +264,7 @@ export function RestaurantFilters({
           </div>
 
           {/* Cost Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Cost
             </Label>
@@ -298,7 +286,7 @@ export function RestaurantFilters({
           </div>
 
           {/* Distance Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Distance
             </Label>
@@ -319,11 +307,28 @@ export function RestaurantFilters({
             </Select>
           </div>
 
+          {/* Search Filter */}
+          <div className='md:col-span-3'>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Search
+            </Label>
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+              <Input
+                key='restaurant-search-input'
+                placeholder='Search restaurants...'
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className='pl-10'
+              />
+            </div>
+          </div>
+
           {/* Action Buttons */}
-          <div className='flex items-end space-x-2'>
+          <div className='flex items-end gap-2 md:col-span-1'>
             <Button
               onClick={applyFilters}
-              className='bg-vineyard-500 hover:bg-vineyard-600 flex-1'
+              className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3'
             >
               Go
             </Button>
@@ -331,7 +336,7 @@ export function RestaurantFilters({
               variant='outline'
               onClick={clearFilters}
               disabled={!hasActiveFilters}
-              className='flex-1'
+              className='h-9 px-3'
             >
               Clear
             </Button>

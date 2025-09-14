@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useSimpleSubscription } from '@/lib/context/simple-subscription-context';
 import {
   Card,
   CardContent,
@@ -9,10 +10,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserMenu } from '@/components/ui/user-menu';
 import {
   Check,
-  Grape,
   ArrowRight,
   Star,
   Lock,
@@ -20,6 +19,7 @@ import {
   Crown,
   Gift,
   X,
+  Grape,
 } from 'lucide-react';
 import { planOptions } from '@/lib/data';
 
@@ -30,74 +30,21 @@ import { useState, useEffect } from 'react';
 export default function PlansPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { selectPlan } = useSimpleSubscription();
   const [loading, setLoading] = useState(false);
-  const [userPlan, setUserPlan] = useState<string | null>(null);
-  const [checkingPlan, setCheckingPlan] = useState(true);
-
-  // Check if user already has a plan
-  useEffect(() => {
-    const checkUserPlan = async () => {
-      if (session?.user?.email) {
-        try {
-          const response = await fetch('/api/users/plan');
-          if (response.ok) {
-            const data = await response.json();
-            if (data.data?.selectedPlan) {
-              setUserPlan(data.data.selectedPlan);
-              // If user has a plan and is coming from vineyard selection, redirect to explore
-              if (data.data.selectedPlan) {
-                router.push('/explore');
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Failed to check user plan:', error);
-        } finally {
-          setCheckingPlan(false);
-        }
-      } else {
-        setCheckingPlan(false);
-      }
-    };
-
-    checkUserPlan();
-  }, [session, router]);
 
   const handleSelectPlan = async (planId: string) => {
     if (!session?.user?.email) {
+      // Handle case where user is not logged in
       router.push('/sign-in');
       return;
     }
 
     setLoading(true);
-
     try {
-      const response = await fetch('/api/users/plan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ plan: planId }),
-      });
-
-      if (response.ok) {
-        if (planId === 'free') {
-          router.push('/explore');
-        } else {
-          // For now, show coming soon - future: navigate to payment screen
-          alert(
-            `${
-              planOptions.find((p) => p.id === planId)?.name
-            } plan coming soon! Upgrade functionality will be available soon.`
-          );
-        }
-      } else {
-        throw new Error('Failed to save plan');
-      }
+      await selectPlan(planId);
     } catch (error) {
       console.error('Error selecting plan:', error);
-      alert('Failed to save plan selection. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -132,49 +79,16 @@ export default function PlansPage() {
   };
 
   // Show loading while checking plan
-  if (checkingPlan) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 flex items-center justify-center'>
-        <div className='flex items-center gap-3'>
-          <div className='animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-vineyard-500'></div>
-          <span className='text-lg text-gray-600'>Checking your plan...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100'>
-      {/* Header */}
-      <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm'>
-        <div className='container mx-auto px-4 py-4'>
-          <div className='flex justify-between items-center'>
-            <div className='flex items-center space-x-3'>
-              <Grape className='h-8 w-8 text-vineyard-500' />
-              <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
-                  Vineyard Tour Planner
-                </h1>
-                <p className='text-sm text-gray-600'>
-                  Plan your perfect wine tour experience
-                </p>
-              </div>
-            </div>
-            <UserMenu />
-          </div>
-        </div>
-      </header>
-
+    <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 pt-8'>
       <div className='container mx-auto px-4 py-8 max-w-6xl'>
         {/* Hero Section */}
         <div className='text-center mb-12'>
-          <h2 className='text-4xl md:text-5xl font-bold text-gray-900 mb-4'>
+          <h2 className='text-3xl md:text-5xl font-bold text-gray-900 mb-4'>
             Choose Your Tour Plan
           </h2>
-          <p className='text-xl text-gray-600 mb-2'>
-            Combining 25 years of expertise with AI
-          </p>
-          <p className='text-lg text-gray-500 max-w-2xl mx-auto'>
+
+          <p className='md:text-lg text-gray-500 max-w-2xl mx-auto'>
             Select the perfect plan for your vineyard adventure. Start with our
             free plan and upgrade anytime.
           </p>
@@ -215,7 +129,6 @@ export default function PlansPage() {
                     <span className='text-gray-500'>/{plan.duration}</span>
                   )}
                 </div>
-                <p className='text-sm text-gray-500 mt-1'>{plan.duration}</p>
               </CardHeader>
 
               <CardContent className='space-y-4'>
@@ -292,10 +205,10 @@ export default function PlansPage() {
           ))}
         </div>
 
-        {/* Mobile/Tablet Table View */}
+        {/* Mobile/Tablet Table View - FIXED */}
         <div className='lg:hidden mb-8'>
-          <div className='bg-white rounded-lg shadow-sm border overflow-hidden'>
-            {/* Header with Plan Names */}
+          <div className='bg-white rounded-lg shadow-sm border'>
+            {/* Header stays fixed (no horizontal scroll) */}
             <div className='bg-vineyard-500 text-white p-4'>
               <h3 className='text-xl font-bold text-center'>Plans</h3>
               <p className='text-center text-vineyard-100 text-sm mt-1'>
@@ -303,237 +216,224 @@ export default function PlansPage() {
               </p>
             </div>
 
-            {/* Plan Headers */}
-            <div className='grid grid-cols-5 bg-gray-50 border-b'>
-              <div className='p-3 text-xs font-medium text-gray-500'></div>
-              {planOptions.map((plan) => (
-                <div key={plan.id} className='p-3 text-center'>
-                  <div
-                    className={`inline-flex items-center justify-center w-16 h-8 rounded text-white text-xs font-medium ${
-                      plan.id === 'free'
-                        ? 'bg-vineyard-500'
-                        : plan.id === 'plus'
-                        ? 'bg-vineyard-600'
-                        : plan.id === 'premium'
-                        ? 'bg-vineyard-700'
-                        : 'bg-vineyard-800'
-                    }`}
-                  >
-                    {plan.name}
+            {/* Scroll only the comparison content on <=500px */}
+            <div className='max-[500px]:overflow-x-auto'>
+              <div className='max-[500px]:min-w-[500px]'>
+                {/* Plan Headers with pricing */}
+                <div className='grid grid-cols-5 bg-gray-50 border-b min-h-[80px]'>
+                  <div className='p-2 text-xs font-medium text-gray-500 flex items-center'></div>
+                  {planOptions.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className='p-2 text-center flex flex-col justify-center items-center'
+                    >
+                      <div
+                        className={`inline-flex items-center justify-center w-full max-w-[60px] h-8 rounded text-white text-xs font-bold mb-1 ${
+                          plan.id === 'free'
+                            ? 'bg-vineyard-500'
+                            : plan.id === 'plus'
+                            ? 'bg-vineyard-600'
+                            : plan.id === 'premium'
+                            ? 'bg-vineyard-700'
+                            : 'bg-vineyard-800'
+                        }`}
+                      >
+                        {plan.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Table Rows - Fixed alignment and spacing */}
+                <div className='divide-y divide-gray-200'>
+                  {/* Saved Selections */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Saved Selections
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 text-center text-sm font-bold text-vineyard-600 flex items-center justify-center'
+                      >
+                        {plan.features.savedSelections}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Saved For */}
+                  <div className='grid grid-cols-5 min-h-[60px] bg-gray-50'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Saved For
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 text-center text-xs font-medium flex items-center justify-center'
+                      >
+                        {plan.features.planSaved}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Quality Ratings */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Quality Ratings
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.qualityRatings)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Plan Download */}
+                  <div className='grid grid-cols-5 min-h-[60px] bg-gray-50'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Plan Download
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.planDownload)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Curated Offers */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Curated Offers
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.curatedOffers)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Wine Hotels */}
+                  <div className='grid grid-cols-5 min-h-[60px] bg-gray-50'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Wine Hotels
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.wineHotelBnB)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Dinner Ideas */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Dinner Ideas
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.dinnerSuggestion)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Premium Offers */}
+                  <div className='grid grid-cols-5 min-h-[60px] bg-gray-50'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Premium Offers
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.premiumOffers)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Wine Ratings */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Wine Ratings
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.wineRatings)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Access to Q&A */}
+                  <div className='grid grid-cols-5 min-h-[60px] bg-gray-50'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      Access to Q&A
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.accessToQA)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* AI Access */}
+                  <div className='grid grid-cols-5 min-h-[60px]'>
+                    <div className='px-3 py-4 text-sm font-medium text-gray-900 flex items-center border-r border-gray-200'>
+                      AI Access
+                    </div>
+                    {planOptions.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className='px-2 py-4 flex items-center justify-center'
+                      >
+                        {renderFeatureValue(plan.features.aiAccess)}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+
+                {/* Action Buttons - Fixed spacing */}
+                <div className='grid grid-cols-4 gap-2 p-3 bg-gray-50'>
+                  {planOptions.map((plan) => (
+                    <Button
+                      key={plan.id}
+                      size='sm'
+                      className={`text-xs h-9 whitespace-nowrap min-w-[80px] ${
+                        plan.id === 'free'
+                          ? 'bg-vineyard-500 text-white hover:bg-vineyard-600'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={loading}
+                    >
+                      {plan.id === 'free' ? 'Start Free' : 'Coming Soon'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
-
-            {/* Table Rows */}
-            <div className='divide-y divide-gray-200'>
-              {/* Saved Selections */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Saved
-                  <br />
-                  Selections
-                </div>
-                {planOptions.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className='px-3 py-2 text-center text-sm font-medium'
-                  >
-                    {plan.features.savedSelections}
-                  </div>
-                ))}
-              </div>
-
-              {/* Saved For */}
-              <div className='grid grid-cols-5 py-3 bg-gray-50'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Saved For
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center text-sm'>
-                    {plan.features.planSaved}
-                  </div>
-                ))}
-              </div>
-
-              {/* Quality Ratings */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Quality
-                  <br />
-                  Ratings
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.qualityRatings)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Plan Download */}
-              <div className='grid grid-cols-5 py-3 bg-gray-50'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Plan Download
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.planDownload)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Curated Offers */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Curated Offers
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.curatedOffers)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Wine Hotels */}
-              <div className='grid grid-cols-5 py-3 bg-gray-50'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Wine Hotels
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.wineHotelBnB)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Dinner Ideas */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Dinner Ideas
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.dinnerSuggestion)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Premium Offers */}
-              <div className='grid grid-cols-5 py-3 bg-gray-50'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Premium Offers
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.premiumOffers)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Wine Ratings */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Wine Ratings
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.wineRatings)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Access to Q&A */}
-              <div className='grid grid-cols-5 py-3 bg-gray-50'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Access to Q&A
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.accessToQA)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Next */}
-              <div className='grid grid-cols-5 py-3'>
-                <div className='px-3 py-2 text-sm font-medium text-gray-900'>
-                  Next
-                </div>
-                {planOptions.map((plan) => (
-                  <div key={plan.id} className='px-3 py-2 text-center'>
-                    {renderFeatureValue(plan.features.aiAccess)}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className='grid grid-cols-4 gap-2 p-4 bg-gray-50'>
-              {planOptions.map((plan) => (
-                <Button
-                  key={plan.id}
-                  size='sm'
-                  className={`text-xs ${
-                    plan.id === 'free'
-                      ? 'bg-vineyard-500 text-white hover:bg-vineyard-600'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  onClick={() => handleSelectPlan(plan.id)}
-                  disabled={loading}
-                >
-                  {plan.id === 'free' ? 'Start Free' : 'Coming Soon'}
-                </Button>
-              ))}
-            </div>
+            {/* </div> */}
           </div>
-        </div>
-
-        {/* Info Cards */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-          <Card className='border-0 bg-vineyard-50'>
-            <CardHeader className='text-center'>
-              <div className='mx-auto mb-2 p-3 bg-vineyard-100 rounded-full w-fit'>
-                <Grape className='h-6 w-6 text-vineyard-500' />
-              </div>
-              <CardTitle className='text-lg'>Expert Curation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className='text-center'>
-                25 years of wine expertise combined with AI to suggest the
-                perfect vineyard experiences for your taste and preferences.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className='border-0 bg-vineyard-100'>
-            <CardHeader className='text-center'>
-              <div className='mx-auto mb-2 p-3 bg-vineyard-200 rounded-full w-fit'>
-                <Zap className='h-6 w-6 text-vineyard-700' />
-              </div>
-              <CardTitle className='text-lg'>Smart Planning</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className='text-center'>
-                AI-powered recommendations for vineyards, restaurants, and
-                accommodations. Build your perfect wine tour effortlessly.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className='border-0 bg-vineyard-50'>
-            <CardHeader className='text-center'>
-              <div className='mx-auto mb-2 p-3 bg-vineyard-100 rounded-full w-fit'>
-                <Crown className='h-6 w-6 text-vineyard-500' />
-              </div>
-              <CardTitle className='text-lg'>Premium Features</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className='text-center'>
-                Upgrade anytime to access PDF exports, wine ratings, premium
-                offers, and exclusive wine hotel recommendations.
-              </CardDescription>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

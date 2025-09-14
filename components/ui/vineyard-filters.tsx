@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { Search, X, Filter } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -48,11 +48,11 @@ const costOptions = [
 ];
 
 const experienceOptions = [
-  { id: 'tasting_only', label: 'Tasting Only' },
-  { id: 'tour_and_tasting', label: 'Tour & Tasting' },
-  { id: 'pairing_and_lunch', label: 'Pairing & Lunch' },
-  { id: 'vine_experience', label: 'Vine Experience' },
-  { id: 'masterclass_workshop', label: 'Masterclass/Workshop' },
+  { value: 'tasting_only', label: 'Tasting Only' },
+  { value: 'tour_and_tasting', label: 'Tour & Tasting' },
+  { value: 'pairing_and_lunch', label: 'Pairing & Lunch' },
+  { value: 'vine_experience', label: 'Vine Experience' },
+  { value: 'masterclass_workshop', label: 'Masterclass/Workshop' },
 ];
 
 export function VineyardFilters({
@@ -203,38 +203,17 @@ export function VineyardFilters({
     [tempFilters, appliedFilters, searchInput]
   );
 
-  const handleExperienceChange = (experienceId: string, checked: boolean) => {
-    const newExperience = checked
-      ? [...tempFilters.experience, experienceId]
-      : tempFilters.experience.filter((id) => id !== experienceId);
-
-    updateTempFilters({ experience: newExperience });
+  const handleExperienceChange = (selectedExperience: string[]) => {
+    updateTempFilters({ experience: selectedExperience });
   };
 
   const FilterContent = useMemo(
     () => (
       <>
-        {/* Search Bar */}
-
         {/* Filter Row */}
-        <div className='grid grid-cols-1 md:grid-cols-6 gap-4 mb-4'>
+        <div className='grid grid-cols-1 md:grid-cols-12 gap-4 mb-4'>
           {/* Area Filter */}
-          <div>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Search
-            </Label>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
-              <Input
-                key='vineyard-search-input'
-                placeholder='Search vineyards...'
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className='pl-10'
-              />
-            </div>
-          </div>
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Area
             </Label>
@@ -256,7 +235,7 @@ export function VineyardFilters({
           </div>
 
           {/* Type Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Type
             </Label>
@@ -278,7 +257,7 @@ export function VineyardFilters({
           </div>
 
           {/* Cost Filter */}
-          <div>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Cost
             </Label>
@@ -299,11 +278,41 @@ export function VineyardFilters({
             </Select>
           </div>
 
+          {/* Search Filter */}
+          <div className='md:col-span-2'>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Search
+            </Label>
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+              <Input
+                key='vineyard-search-input'
+                placeholder='Search vineyards...'
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className='pl-10'
+              />
+            </div>
+          </div>
+
+          {/* Experience Filter */}
+          <div className='md:col-span-3'>
+            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+              Experience Type
+            </Label>
+            <MultiSelect
+              options={experienceOptions}
+              selected={tempFilters.experience}
+              onChange={handleExperienceChange}
+              placeholder='Select experiences...'
+            />
+          </div>
+
           {/* Action Buttons */}
-          <div className='flex items-end space-x-2 md:col-span-2'>
+          <div className='flex items-end gap-2 md:col-span-1'>
             <Button
               onClick={applyFilters}
-              className='bg-vineyard-500 hover:bg-vineyard-600 flex-1'
+              className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3'
             >
               Go
             </Button>
@@ -311,7 +320,7 @@ export function VineyardFilters({
               variant='outline'
               onClick={clearFilters}
               disabled={!hasActiveFilters}
-              className='flex-1'
+              className='h-9 px-3'
             >
               Clear
             </Button>
@@ -327,32 +336,6 @@ export function VineyardFilters({
             </p>
           </div>
         )}
-
-        {/* Experience Checkboxes */}
-        <div className='mb-4'>
-          <Label className='text-sm font-medium text-gray-700 mb-3 block'>
-            Experience Type
-          </Label>
-          <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>
-            {experienceOptions.map((option) => (
-              <div key={option.id} className='flex items-center space-x-2'>
-                <Checkbox
-                  id={option.id}
-                  checked={tempFilters.experience.includes(option.id)}
-                  onCheckedChange={(checked) =>
-                    handleExperienceChange(option.id, !!checked)
-                  }
-                />
-                <Label
-                  htmlFor={option.id}
-                  className='text-xs font-normal leading-tight cursor-pointer'
-                >
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Active Filters */}
         {hasActiveFilters && (
@@ -429,7 +412,7 @@ export function VineyardFilters({
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
               >
-                {experienceOptions.find((opt) => opt.id === exp)?.label}
+                {experienceOptions.find((opt) => opt.value === exp)?.label}
                 <X
                   className='ml-1 h-3 w-3 cursor-pointer'
                   onClick={() => {

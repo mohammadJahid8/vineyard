@@ -1,5 +1,6 @@
 'use client';
 
+import { useTrip } from '@/lib/context/trip-context';
 import { cn } from '@/lib/utils';
 import { Home, Search, Grid3X3, FileText, User } from 'lucide-react';
 import Link from 'next/link';
@@ -25,10 +26,10 @@ const navigationItems = [
     href: '/plans',
   },
   {
-    id: 'itinerary',
+    id: 'plan',
     label: 'Plan',
     icon: FileText,
-    href: '/itinerary',
+    href: '/explore/plan',
   },
   {
     id: 'profile',
@@ -40,6 +41,11 @@ const navigationItems = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
+
+  const { trip } = useTrip();
+
+  // Check if there are any vineyards in the plan
+  const hasPlan = trip.vineyards.length > 0;
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -54,6 +60,7 @@ export function BottomNavigation() {
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const isDisabled = item.id === 'plan' && !hasPlan;
 
           return (
             <Link
@@ -62,8 +69,10 @@ export function BottomNavigation() {
               className={cn(
                 'flex flex-col items-center justify-center space-y-1 text-xs transition-colors',
                 {
-                  'text-vineyard-600': active,
-                  'text-gray-400 hover:text-gray-600': !active,
+                  'text-vineyard-600': active && !isDisabled,
+                  'text-gray-400 hover:text-gray-600': !active && !isDisabled,
+                  'text-gray-300 cursor-not-allowed pointer-events-none':
+                    isDisabled,
                 }
               )}
             >
@@ -71,6 +80,7 @@ export function BottomNavigation() {
                 className={cn('h-5 w-5', {
                   'text-vineyard-600': active,
                   'text-gray-400': !active,
+                  'text-gray-300 pointer-events-none': isDisabled,
                 })}
               />
               <span className='font-medium'>{item.label}</span>

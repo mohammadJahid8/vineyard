@@ -10,10 +10,18 @@ export interface IUser extends Document {
   role: 'user' | 'admin' | 'moderator';
   selectedPlan?: 'free' | 'plus' | 'premium' | 'pro';
   planSelectedAt?: Date;
+  subscriptionExpiresAt?: Date;
+  isSubscriptionActive: boolean;
   isActive: boolean;
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Method declarations
+  isAdmin(): boolean;
+  isModerator(): boolean;
+  hasAccess(): boolean;
+  createSubscription(planType?: string): Promise<IUser>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -56,6 +64,13 @@ const UserSchema = new Schema<IUser>(
     },
     planSelectedAt: {
       type: Date,
+    },
+    subscriptionExpiresAt: {
+      type: Date,
+    },
+    isSubscriptionActive: {
+      type: Boolean,
+      default: false,
     },
     isActive: {
       type: Boolean,
@@ -105,6 +120,34 @@ UserSchema.methods.isModerator = function () {
   return this.role === 'moderator' || this.role === 'admin';
 };
 
+UserSchema.methods.hasAccess = function () {
+  // Admin users always have access
+  if (this.role === 'admin') {
+    return true;
+  }
+  
+  // Check if user has an active subscription
+  return this.isSubscriptionActive && this.subscriptionExpiresAt && new Date() < this.subscriptionExpiresAt;
+};
+
+UserSchema.methods.createSubscription = function (planType = 'free') {
+  // Create subscription based on plan type
+  const expirationDate = new Date();
+  
+  if (planType === 'free') {
+    expirationDate.setMinutes(expirationDate.getMinutes() + 5); // 5 minutes for testing
+  } else {
+    expirationDate.setDate(expirationDate.getDate() + 30); // 30 days for paid plans
+  }
+  
+  this.selectedPlan = planType;
+  this.planSelectedAt = new Date();
+  this.subscriptionExpiresAt = expirationDate;
+  this.isSubscriptionActive = true;
+  
+  return this.save();
+};
+
 // Static methods
 UserSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email: email.toLowerCase() });
@@ -123,6 +166,6 @@ UserSchema.pre('save', function (next) {
 });
 
 // Check if model is already registered to prevent re-compilation error
-const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema); 
 
 export default User;

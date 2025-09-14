@@ -183,7 +183,7 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     if (restaurant) {
       addRestaurant(restaurant);
       // Navigate to plan page to show the added restaurant
-      router.push('/explore/review');
+      router.push('/explore/plan');
     }
   };
 
@@ -207,7 +207,7 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     >
       <NavigationWarning />
       {/* Filters */}
-      <div className='container mx-auto px-4'>
+      <div className='container mx-auto px-4 mt-6'>
         <RestaurantFilters onFiltersChange={handleFiltersChange} />
       </div>
 
@@ -232,11 +232,9 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
             {(trip.restaurant || trip.vineyards.length > 0) && (
               <Button
                 className='bg-vineyard-500 hover:bg-vineyard-600'
-                onClick={() => router.push('/explore/review')}
+                onClick={() => router.push('/explore/plan')}
               >
-                Next: Review
-                {trip.restaurant && trip.vineyards.length > 0 && ' ✓'}
-                {hasUnsavedChanges && ' ⚠️'}
+                Next: Plan
               </Button>
             )}
           </div>

@@ -19,7 +19,8 @@ export interface IPlan extends Document {
   title?: string;
   vineyards: IPlanVineyard[];
   restaurant?: IPlanRestaurant;
-  status: 'draft' | 'confirmed' | 'expired';
+  customOrder?: Array<{ id: string; order: number; type: 'vineyard' | 'restaurant' }>;
+  // status: 'draft' | 'confirmed' | 'expired';  // Removed status field
   isActive: boolean;
   expiresAt: Date;
   confirmedAt?: Date;
@@ -77,33 +78,27 @@ const PlanSchema = new Schema<IPlan>(
     vineyards: {
       type: [PlanVineyardSchema],
       default: [],
-      validate: {
-        validator: function(v: IPlanVineyard[]) {
-          return v.length <= 3; // Max 3 vineyards
-        },
-        message: 'Maximum 3 vineyards allowed per plan'
-      }
+      // validate: {
+      //   validator: function(v: IPlanVineyard[]) {
+      //     return v.length <= 3; // Max 3 vineyards
+      //   },
+      //   message: 'Maximum 3 vineyards allowed per plan'
+      // }
     },
     restaurant: {
       type: PlanRestaurantSchema,
     },
-    status: {
-      type: String,
-      enum: ['draft', 'confirmed', 'expired'],
-      default: 'draft',
+    customOrder: {
+      type: Array,
+      default: [],
       required: true,
     },
+   
     isActive: {
       type: Boolean,
       default: true,
     },
-    expiresAt: {
-      type: Date,
-      required: false, // Not required for draft plans
-    },
-    confirmedAt: {
-      type: Date,
-    },
+   
   },
   {
     timestamps: true,
@@ -120,8 +115,6 @@ const PlanSchema = new Schema<IPlan>(
 
 // Indexes for better query performance
 PlanSchema.index({ userId: 1, isActive: 1 });
-PlanSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for automatic expiry
-PlanSchema.index({ status: 1 });
 PlanSchema.index({ userId: 1, status: 1, isActive: 1 });
 
 // Instance methods
@@ -129,65 +122,40 @@ PlanSchema.methods.isExpired = function () {
   return this.expiresAt && new Date() > this.expiresAt;
 };
 
-PlanSchema.methods.confirm = function () {
-  this.status = 'confirmed';
-  this.confirmedAt = new Date();
+// PlanSchema.methods.confirm = function () {
+//   this.status = 'confirmed';
+//   this.confirmedAt = new Date();
   
-  // Set expiry only if not already set (first confirmation)
-  if (!this.expiresAt) {
-    const expirationMinutes = process.env.NODE_ENV === 'development' ? 5 : 1440; // 5 min or 24 hours
-    this.expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
-  }
+//   // Set expiry only if not already set (first confirmation)
+//   if (!this.expiresAt) {
+//     const expirationMinutes = process.env.NODE_ENV === 'development' ? 5 : 1440; // 5 min or 24 hours
+//     this.expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
+//   }
   
-  return this.save();
-};
+//   return this.save();
+// };
 
-PlanSchema.methods.expire = function () {
-  this.status = 'expired';
-  this.isActive = false;
-  return this.save();
-};
+// PlanSchema.methods.expire = function () {
+//   this.status = 'expired';
+//   this.isActive = false;
+//   return this.save();
+// };
 
 // Static methods interface
 interface IPlanModel extends mongoose.Model<IPlan> {
   findActiveByUserId(userId: string): Promise<IPlan | null>;
   findConfirmedByUserId(userId: string): Promise<IPlan[]>;
-  expireOldPlans(): Promise<any>;
+  
 }
 
 // Static methods
 PlanSchema.statics.findActiveByUserId = function (userId: string) {
   return this.findOne({ 
     userId, 
-    isActive: true, 
-    status: { $ne: 'expired' },
-    $or: [
-      { status: 'draft' }, // Draft plans don't have expiry
-      { status: 'confirmed', expiresAt: { $gt: new Date() } } // Confirmed plans check expiry
-    ]
+    isActive: true
   });
 };
 
-PlanSchema.statics.findConfirmedByUserId = function (userId: string) {
-  return this.find({ 
-    userId, 
-    status: 'confirmed',
-    isActive: true 
-  }).sort({ confirmedAt: -1 });
-};
-
-PlanSchema.statics.expireOldPlans = function () {
-  return this.updateMany(
-    { 
-      expiresAt: { $lt: new Date() },
-      status: 'confirmed' // Only expire confirmed plans, not drafts
-    },
-    { 
-      status: 'expired',
-      isActive: false 
-    }
-  );
-};
 
 // Pre-save middleware to auto-generate title if not provided
 PlanSchema.pre('save', function (next) {
@@ -201,7 +169,8 @@ PlanSchema.pre('save', function (next) {
   next();
 });
 
-// Check if model is already registered to prevent re-compilation error
-const Plan = (mongoose.models.Plan as unknown as IPlanModel) || mongoose.model<IPlan, IPlanModel>('Plan', PlanSchema);
+
+const Plan = mongoose.model<IPlan, IPlanModel>('Plan', PlanSchema, undefined, { overwriteModels: true });
+
 
 export default Plan;

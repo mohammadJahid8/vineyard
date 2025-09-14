@@ -30,13 +30,14 @@ export interface TripState {
 interface TripContextType {
   trip: TripState;
   addVineyard: (vineyard: Vineyard, offer?: Offer) => boolean; // Returns false if limit reached
-  addRestaurant: (restaurant: Restaurant) => void;
-  removeVineyard: (vineyardId: string) => void;
-  removeRestaurant: () => void;
-  updateVineyardTime: (vineyardId: string, time: string) => void;
-  updateRestaurantTime: (time: string) => void;
+  addRestaurant: (restaurant: Restaurant) => Promise<void>;
+  removeVineyard: (vineyardId: string) => Promise<void>;
+  removeRestaurant: () => Promise<void>;
+  updateVineyardTime: (vineyardId: string, time: string) => Promise<void>;
+  updateRestaurantTime: (time: string) => Promise<void>;
+  updateVineyardOrder: (newOrder: TripVineyard[]) => Promise<void>;
   clearTrip: () => void;
-  savePlan: () => Promise<void>;
+  // savePlan: () => Promise<void>;
   loadPlan: () => Promise<void>;
   planId: string | null;
   hasUnsavedChanges: boolean;
@@ -45,7 +46,7 @@ interface TripContextType {
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
-const MAX_VINEYARDS = 3;
+const MAX_VINEYARDS = 10;
 
 export function TripProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
@@ -85,7 +86,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
     setHasUnsavedChanges(hasChanges);
   }, [trip, savedState]);
 
-  const addVineyard = (vineyard: Vineyard, offer?: Offer): boolean => {
+  const addVineyard = async (vineyard: Vineyard, offer?: Offer) => {
     if (trip.vineyards.length >= MAX_VINEYARDS) {
       return false; // Cannot add more vineyards
     }
@@ -101,50 +102,137 @@ export function TripProvider({ children }: { children: ReactNode }) {
       return false; // Vineyard already added
     }
 
-    setTrip((prev) => ({
-      ...prev,
-      vineyards: [...prev.vineyards, { vineyard, offer }],
-    }));
+    const newTrip = {
+      ...trip,
+      vineyards: [...trip.vineyards, { vineyard, offer }],
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      await savePlanWithState(newTrip).catch(console.error);
+    }
+
     return true;
   };
 
-  const addRestaurant = (restaurant: Restaurant) => {
-    setTrip((prev) => ({
-      ...prev,
+  const addRestaurant = async (restaurant: Restaurant) => {
+    const newTrip = {
+      ...trip,
       restaurant: { restaurant },
-    }));
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error('Error saving plan after adding restaurant:', error);
+      }
+    }
   };
 
-  const removeVineyard = (vineyardId: string) => {
-    setTrip((prev) => ({
-      ...prev,
-      vineyards: prev.vineyards.filter(
+  const removeVineyard = async (vineyardId: string) => {
+    const newTrip = {
+      ...trip,
+      vineyards: trip.vineyards.filter(
         (v) => v.vineyard.vineyard_id !== vineyardId
       ),
-    }));
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error('Error saving plan after removing vineyard:', error);
+      }
+    }
   };
 
-  const removeRestaurant = () => {
-    setTrip((prev) => ({
-      ...prev,
+  const removeRestaurant = async () => {
+    const newTrip = {
+      ...trip,
       restaurant: null,
-    }));
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error('Error saving plan after removing restaurant:', error);
+      }
+    }
   };
 
-  const updateVineyardTime = (vineyardId: string, time: string) => {
-    setTrip((prev) => ({
-      ...prev,
-      vineyards: prev.vineyards.map((v) =>
+  const updateVineyardTime = async (vineyardId: string, time: string) => {
+    const newTrip = {
+      ...trip,
+      vineyards: trip.vineyards.map((v) =>
         v.vineyard.vineyard_id === vineyardId ? { ...v, time } : v
       ),
-    }));
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error('Error saving plan after updating vineyard time:', error);
+      }
+    }
   };
 
-  const updateRestaurantTime = (time: string) => {
-    setTrip((prev) => ({
-      ...prev,
-      restaurant: prev.restaurant ? { ...prev.restaurant, time } : null,
-    }));
+  const updateRestaurantTime = async (time: string) => {
+    const newTrip = {
+      ...trip,
+      restaurant: trip.restaurant ? { ...trip.restaurant, time } : null,
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error(
+          'Error saving plan after updating restaurant time:',
+          error
+        );
+      }
+    }
+  };
+
+  const updateVineyardOrder = async (newOrder: TripVineyard[]) => {
+    const newTrip = {
+      ...trip,
+      vineyards: newOrder,
+    };
+
+    setTrip(newTrip);
+
+    // Auto-save with the new state
+    if (session?.user?.id) {
+      try {
+        await savePlanWithState(newTrip);
+      } catch (error) {
+        console.error(
+          'Error saving plan after updating vineyard order:',
+          error
+        );
+      }
+    }
   };
 
   const clearTrip = () => {
@@ -160,12 +248,12 @@ export function TripProvider({ children }: { children: ReactNode }) {
     setHasUnsavedChanges(false);
   };
 
-  const savePlan = async () => {
+  const savePlanWithState = async (tripState: TripState) => {
     if (!session?.user?.id) {
       throw new Error('User not authenticated');
     }
 
-    if (trip.vineyards.length === 0) {
+    if (tripState.vineyards.length === 0) {
       return; // Nothing to save
     }
 
@@ -176,8 +264,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          vineyards: trip.vineyards,
-          restaurant: trip.restaurant,
+          vineyards: tripState.vineyards,
+          restaurant: tripState.restaurant,
         }),
       });
 
@@ -185,10 +273,10 @@ export function TripProvider({ children }: { children: ReactNode }) {
 
       if (data.success) {
         setPlanId(data.data.plan.id);
-        // Update saved state to reflect current state
+        // Update saved state to reflect the saved state
         setSavedState({
-          vineyards: [...trip.vineyards],
-          restaurant: trip.restaurant ? { ...trip.restaurant } : null,
+          vineyards: [...tripState.vineyards],
+          restaurant: tripState.restaurant ? { ...tripState.restaurant } : null,
         });
         setHasUnsavedChanges(false);
       } else {
@@ -232,7 +320,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
           restaurant,
         });
 
-        if (plan.status === 'draft') {
+        if (plan) {
           // Draft plan - set as saved state
           setSavedState({
             vineyards: [...vineyards],
@@ -270,8 +358,9 @@ export function TripProvider({ children }: { children: ReactNode }) {
         removeRestaurant,
         updateVineyardTime,
         updateRestaurantTime,
+        updateVineyardOrder,
         clearTrip,
-        savePlan,
+        // savePlan,
         loadPlan,
         planId,
         hasUnsavedChanges,

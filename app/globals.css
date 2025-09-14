@@ -74,22 +74,22 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Vineyard theme colors */
-  --vineyard-primary: #34c759;
-  --vineyard-primary-light: #4cd964;
-  --vineyard-primary-dark: #28a745;
-  --vineyard-secondary: #48c774;
-  --vineyard-accent: #00d4aa;
-  --vineyard-50: #f0fdf4;
-  --vineyard-100: #dcfce7;
-  --vineyard-200: #bbf7d0;
-  --vineyard-300: #86efac;
-  --vineyard-400: #4ade80;
-  --vineyard-500: #34c759;
-  --vineyard-600: #16a34a;
-  --vineyard-700: #15803d;
-  --vineyard-800: #166534;
-  --vineyard-900: #14532d;
+  /* Vineyard theme colors - Darker green theme */
+  --vineyard-primary: #15803d;
+  --vineyard-primary-light: #16a34a;
+  --vineyard-primary-dark: #166534;
+  --vineyard-secondary: #15803d;
+  --vineyard-accent: #047857;
+  --vineyard-50: #ecfdf5;
+  --vineyard-100: #d1fae5;
+  --vineyard-200: #a7f3d0;
+  --vineyard-300: #6ee7b7;
+  --vineyard-400: #34d399;
+  --vineyard-500: #15803d;
+  --vineyard-600: #166534;
+  --vineyard-700: #14532d;
+  --vineyard-800: #052e16;
+  --vineyard-900: #022c22;
 }
 
 @layer base {

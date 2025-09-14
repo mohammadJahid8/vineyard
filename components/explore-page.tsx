@@ -25,7 +25,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
   const router = useRouter();
   const currentPage = parseInt(searchParams.get('page') || '1');
   const { trip, addVineyard, removeVineyard, hasUnsavedChanges } = useTrip();
-  const MAX_VINEYARDS = 3;
+  const MAX_VINEYARDS = 10;
   const [filters, setFilters] = useState<FilterState>({
     area: '',
     type: '',
@@ -167,17 +167,17 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
   };
 
   // Trip management
-  const handleAddToTrip = (vineyardId: string, offerId?: string) => {
+  const handleAddToTrip = async (vineyardId: string, offerId?: string) => {
     const vineyard = vineyards.find((v) => v.vineyard_id === vineyardId);
     const offer = offerId
       ? offers.find((o) => o.vineyard_id === vineyardId)
       : undefined;
 
     if (vineyard) {
-      const success = addVineyard(vineyard, offer);
+      const success = await addVineyard(vineyard, offer);
       if (!success) {
         alert(
-          'You can only add up to 3 vineyards or this vineyard is already added.'
+          'You can only add up to 10 vineyards or this vineyard is already added.'
         );
       }
     }
@@ -196,7 +196,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
     <VineyardTourLayout currentStep='vineyard'>
       <NavigationWarning />
       {/* Filters */}
-      <div className='container mx-auto px-4'>
+      <div className='container mx-auto px-4 mt-6'>
         <VineyardFilters onFiltersChange={handleFiltersChange} />
       </div>
 
@@ -211,11 +211,11 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
               {filteredVineyards.length} vineyard
               {filteredVineyards.length !== 1 ? 's' : ''} found
             </p>
-            {trip.vineyards.length > 0 && (
+            {/* {trip.vineyards.length > 0 && (
               <p className='text-sm text-vineyard-600 mt-1'>
                 {trip.vineyards.length}/{MAX_VINEYARDS} vineyards selected
               </p>
-            )}
+            )} */}
           </div>
           {trip.vineyards.length > 0 && (
             <div className='flex gap-2'>
@@ -224,8 +224,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
                 onClick={() => router.push('/explore/lunch')}
                 disabled={trip.vineyards.length === 0}
               >
-                Next: Lunch ({trip.vineyards.length})
-                {hasUnsavedChanges && ' ⚠️'}
+                Next: Lunch
               </Button>
             </div>
           )}

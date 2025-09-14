@@ -25,8 +25,7 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
     
-    // Clean up expired plans first
-    await Plan.expireOldPlans();
+    
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -35,28 +34,11 @@ export async function GET(request: NextRequest) {
     let query: any = { userId: session.user.id };
 
     if (type === 'active') {
-      // Get current active draft plan
       const activePlan = await Plan.findActiveByUserId(session.user.id);
-      
-      // Check if plan is expired
-      if (activePlan && activePlan.isExpired()) {
-        await activePlan.expire();
-        return createSuccessResponse(
-          { plan: null, expired: true },
-          'Active plan has expired'
-        );
-      }
       
       return createSuccessResponse(
         { plan: activePlan },
         activePlan ? 'Active plan found' : 'No active plan'
-      );
-    } else if (type === 'confirmed') {
-      // Get confirmed plans
-      const confirmedPlans = await Plan.findConfirmedByUserId(session.user.id);
-      return createSuccessResponse(
-        { plans: confirmedPlans },
-        'Confirmed plans retrieved'
       );
     } else {
       // Get all plans with optional status filter
@@ -95,31 +77,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (vineyards.length > 3) {
+    if (vineyards.length > 10) {
       return createErrorResponse(
         ErrorType.VALIDATION_ERROR,
-        'Maximum 3 vineyards allowed',
+        'Maximum 10 vineyards allowed',
         HttpStatus.BAD_REQUEST
       );
     }
 
     await connectDB();
     
-    // Clean up expired plans first
-    await Plan.expireOldPlans();
 
-    // Check if user has an active draft plan (not confirmed)
+
+
     let plan = await Plan.findOne({
       userId: session.user.id,
       isActive: true,
-      // status: 'draft'
+ 
     });
 
-    // Don't set expiration time for drafts - only set when confirming
+ 
 
     if (plan) {
-      console.log('🚀 ~ POST ~ plan:', plan)
-      // Update existing plan
+      
       plan.vineyards = vineyards.map((v: any) => ({
         vineyardId: v.vineyard.vineyard_id,
         vineyard: v.vineyard,
@@ -141,14 +121,11 @@ export async function POST(request: NextRequest) {
         plan.title = title;
       }
       
-      // Ensure draft plans don't have expiresAt
-      if (plan.status === 'draft') {
-        plan.set('expiresAt', undefined);
-      }
+   
       
       await plan.save();
     } else {
-      // Create new plan (don't include expiresAt for drafts)
+      
       const planData: any = {
         userId: session.user.id,
         vineyards: vineyards.map((v: any) => ({
@@ -157,9 +134,8 @@ export async function POST(request: NextRequest) {
           offer: v.offer,
           time: v.time,
         })),
-        status: 'draft',
-        expiresAt: null,
-        // Don't include expiresAt for draft plans
+        customOrder: []
+        
       };
 
       if (restaurant) {

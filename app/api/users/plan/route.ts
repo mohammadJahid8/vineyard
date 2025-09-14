@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth/config';
 import User from '@/lib/models/User';
 import { createErrorResponse, createSuccessResponse, ErrorType } from '@/lib/api-response';
 import connectDB from '@/lib/mongodb';
+import { findUserWithMethods, createUserSubscription, checkUserAccess } from '@/lib/utils/user-helpers';
 
 
 export async function POST(req: NextRequest) {
@@ -22,15 +23,14 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-
-    const user = await User.findByEmail(session.user.email);
+    
+    const user = await findUserWithMethods(session.user.email);
     if (!user) {
       return createErrorResponse(ErrorType.NOT_FOUND, 'User not found', 404);
     }
 
-    user.selectedPlan = plan;
-    user.planSelectedAt = new Date();
-    await user.save();
+    // Create subscription for the selected plan
+    await createUserSubscription(user, plan);
 
     return createSuccessResponse(
       { selectedPlan: user.selectedPlan, planSelectedAt: user.planSelectedAt },
@@ -51,15 +51,21 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDB();
-
-    const user = await User.findByEmail(session.user.email);
+    
+    const user = await findUserWithMethods(session.user.email);
     if (!user) {
       return createErrorResponse(ErrorType.NOT_FOUND, 'User not found', 404);
     }
 
+    const hasAccess = await checkUserAccess(user);
+    
     return createSuccessResponse({
       selectedPlan: user.selectedPlan,
       planSelectedAt: user.planSelectedAt,
+      subscriptionExpiresAt: user.subscriptionExpiresAt,
+      isSubscriptionActive: user.isSubscriptionActive,
+      hasAccess: hasAccess,
+      isAdmin: user.role === 'admin',
     });
   } catch (error) {
     console.error('Error fetching user plan:', error);
