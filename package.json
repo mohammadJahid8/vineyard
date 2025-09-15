@@ -44,6 +44,7 @@
     "@radix-ui/react-tooltip": "1.1.6",
     "@tailwindcss/postcss": "^4.1.11",
     "@tanstack/react-query": "^5.85.6",
+    "@types/google.maps": "^3.58.1",
     "@types/mongoose": "^5.11.97",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

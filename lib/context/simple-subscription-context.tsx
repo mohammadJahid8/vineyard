@@ -61,7 +61,7 @@ export function SimpleSubscriptionProvider({
       const data = await response.json();
 
       if (data.success) {
-        setSubscription({
+        const newSubscription = {
           selectedPlan: data.data.selectedPlan,
           hasAccess: data.data.hasAccess || data.data.isAdmin,
           isAdmin: data.data.isAdmin,
@@ -70,13 +70,44 @@ export function SimpleSubscriptionProvider({
             ? new Date(data.data.subscriptionExpiresAt)
             : null,
           isSubscriptionActive: data.data.isSubscriptionActive,
-        });
+        };
 
-        // If user doesn't have a plan, redirect to plans page
-        if (!data.data.selectedPlan && data.success) {
+        setSubscription(newSubscription);
+
+        // If user doesn't have a plan, redirect to plans page (only on initial check, not timer)
+        if (!data.data.selectedPlan && data.success && subscription.loading) {
+          router.push('/plans');
+        }
+
+        // If subscription expired and user had access before, redirect to plans page
+        if (
+          !newSubscription.hasAccess &&
+          subscription.hasAccess &&
+          !subscription.loading
+        ) {
           router.push('/plans');
         }
       } else {
+        const newSubscription = {
+          hasAccess: false,
+          isAdmin: false,
+          loading: false,
+          expiresAt: null,
+          isSubscriptionActive: false,
+        };
+
+        setSubscription(newSubscription);
+
+        // Only redirect on initial check or if user previously had access
+        if (subscription.loading || subscription.hasAccess) {
+          router.push('/plans');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+
+      // Only update subscription state if this is the first check or user had access
+      if (subscription.loading || subscription.hasAccess) {
         setSubscription({
           hasAccess: false,
           isAdmin: false,
@@ -84,19 +115,8 @@ export function SimpleSubscriptionProvider({
           expiresAt: null,
           isSubscriptionActive: false,
         });
-        // Redirect to plans page if no plan
         router.push('/plans');
       }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setSubscription({
-        hasAccess: false,
-        isAdmin: false,
-        loading: false,
-        expiresAt: null,
-        isSubscriptionActive: false,
-      });
-      router.push('/plans');
     }
   };
 
@@ -133,6 +153,28 @@ export function SimpleSubscriptionProvider({
       });
     }
   }, [session]);
+
+  // Set up a timer to check access every 30 seconds
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (session?.user?.email) {
+      // Check access immediately
+      checkAccess();
+
+      // Set up interval to check every 30 seconds
+      intervalId = setInterval(() => {
+        checkAccess();
+      }, 5000); // 30 seconds
+    }
+
+    // Cleanup interval on unmount or when session changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [session?.user?.email]);
 
   return (
     <SimpleSubscriptionContext.Provider

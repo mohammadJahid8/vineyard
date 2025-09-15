@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const getPlanIcon = (planId?: string) => {
     switch (planId) {
       case 'free':
-        return <Grape className='h-5 w-5' />;
+        return '';
       case 'plus':
         return <Zap className='h-5 w-5' />;
       case 'premium':
@@ -212,13 +212,13 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className='pt-4'>
+              {/* <div className='pt-4'>
                 <p className='text-sm text-gray-600'>
                   Profile information is automatically synced from your
                   authentication provider. To update your information, please
                   use your Google account settings.
                 </p>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

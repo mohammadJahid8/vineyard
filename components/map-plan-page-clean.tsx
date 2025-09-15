@@ -104,7 +104,6 @@ function SortableLocationItem({
   onUpdateTime,
   onHighlightMarker,
   onShowInfoWindow,
-  onRemove,
 }: {
   location: LocationItem;
   index: number;
@@ -114,7 +113,6 @@ function SortableLocationItem({
   onUpdateTime?: (locationId: string, time: string) => void;
   onHighlightMarker?: (locationId: string) => void;
   onShowInfoWindow?: (locationId: string) => void;
-  onRemove?: (locationId: string) => void;
 }) {
   const {
     attributes,
@@ -170,7 +168,7 @@ function SortableLocationItem({
           </div>
 
           {/* Simple black rounded icon */}
-          {/* <div className='rounded-full flex items-center justify-center flex-shrink-0 mt-1'>
+          <div className='rounded-full flex items-center justify-center flex-shrink-0 mt-1'>
             <Circle
               className={cn(
                 'h-4 w-4',
@@ -179,12 +177,12 @@ function SortableLocationItem({
                   : 'text-orange-500 fill-orange-500'
               )}
             />
-          </div> */}
+          </div>
 
           <div className='flex-1 min-w-0'>
             <div className='flex items-center justify-between'>
               <div className='flex-1 min-w-0'>
-                <h3 className='font-medium text-gray-900 truncate text-base'>
+                <h3 className='font-medium text-gray-900 truncate text-sm'>
                   {location.name}
                 </h3>
               </div>
@@ -253,20 +251,6 @@ function SortableLocationItem({
                         className='h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50'
                       >
                         {location.time ? 'Edit Time' : 'Add Time'}
-                      </Button>
-                    )}
-                    {onRemove && (
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemove(location.id);
-                        }}
-                        className='h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50'
-                        title='Remove item'
-                      >
-                        <X className='h-4 w-4' />
                       </Button>
                     )}
                   </>
@@ -595,7 +579,7 @@ export default function MapViewPage() {
     legs: Array<{ distance: string; duration: string }>;
   } | null>(null);
   const { subscription } = useSimpleSubscription();
-  // console.log('🚀 ~ MapViewPage ~ subscription:', subscription);
+  console.log('🚀 ~ MapViewPage ~ subscription:', subscription);
   const [sortedLocations, setSortedLocations] = useState<LocationItem[]>([]);
   const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
   const [directionsRenderer, setDirectionsRenderer] = useState<any>(null);
@@ -699,106 +683,6 @@ export default function MapViewPage() {
             )
           );
         }
-      }
-    }
-  };
-
-  // Handle removing items
-  const handleRemoveItem = async (locationId: string) => {
-    try {
-      // Check if this would leave no vineyards
-      const vineyardCount = sortedLocations.filter(
-        (loc) => loc.type === 'vineyard'
-      ).length;
-      const isRemovingVineyard = locationId.startsWith('vineyard-');
-
-      if (isRemovingVineyard && vineyardCount <= 1) {
-        alert(
-          'Cannot remove the last vineyard. At least one vineyard is required.'
-        );
-        return;
-      }
-
-      // Optimistically update local state
-      const newLocations = sortedLocations.filter(
-        (loc) => loc.id !== locationId
-      );
-      setSortedLocations(newLocations);
-
-      // Update map immediately
-      updateMapWithNewOrder(newLocations);
-
-      // Save to database
-      const response = await fetch('/api/plans/remove-item', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId: plan?.id,
-          locationId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove item');
-      }
-
-      // Update the plan state with the response
-      if (data.plan) {
-        setPlan(data.plan);
-      }
-    } catch (error) {
-      console.error('Error removing item:', error);
-      alert(error instanceof Error ? error.message : 'Failed to remove item');
-
-      // Revert local state on error - reload from current plan
-      if (plan) {
-        // Reconstruct locations from current plan data
-        const allLocations: LocationItem[] = [];
-
-        // Add vineyards
-        plan.vineyards.forEach((planVineyard, index) => {
-          if (
-            planVineyard.vineyard?.latitude &&
-            planVineyard.vineyard?.longitude
-          ) {
-            allLocations.push({
-              id: `vineyard-${index}`,
-              type: 'vineyard',
-              name:
-                planVineyard.vineyard.vineyard || planVineyard.vineyard.name,
-              lat: planVineyard.vineyard.latitude,
-              lng: planVineyard.vineyard.longitude,
-              time: planVineyard.time || '',
-              offer: planVineyard.offer,
-              data: planVineyard.vineyard,
-            });
-          }
-        });
-
-        // Add restaurant if exists
-        if (
-          plan.restaurant?.restaurant?.latitude &&
-          plan.restaurant?.restaurant?.longitude
-        ) {
-          allLocations.push({
-            id: 'restaurant-0',
-            type: 'restaurant',
-            name:
-              plan.restaurant.restaurant.restaurants ||
-              plan.restaurant.restaurant.name,
-            lat: plan.restaurant.restaurant.latitude,
-            lng: plan.restaurant.restaurant.longitude,
-            time: plan.restaurant.time || '',
-            data: plan.restaurant.restaurant,
-          });
-        }
-
-        setSortedLocations(allLocations);
-        updateMapWithNewOrder(allLocations);
       }
     }
   };
@@ -1164,7 +1048,12 @@ export default function MapViewPage() {
 
         if (data.success && data.data.plans && data.data.plans.length > 0) {
           const confirmedPlan = data.data.plans[0];
-          console.log('🚀 ~ loadPlan ~ confirmedPlan:', confirmedPlan);
+
+          // Check if plan is expired
+          if (new Date(confirmedPlan.expiresAt) <= new Date()) {
+            setError('Your plan has expired.');
+            return;
+          }
 
           setPlan(confirmedPlan);
         } else {
@@ -1177,10 +1066,18 @@ export default function MapViewPage() {
         setLoading(false);
       }
     };
-    setTimeout(() => {
+
+    // Only load plan if subscription allows access
+    if (
+      !subscription.loading &&
+      (subscription.hasAccess || subscription.isAdmin)
+    ) {
       loadPlan();
-    }, 1000);
-  }, []);
+    } else if (!subscription.loading && !subscription.hasAccess) {
+      setError('Access denied. Please check your subscription.');
+      setLoading(false);
+    }
+  }, [subscription]);
 
   // Prepare sorted locations when plan changes
   useEffect(() => {
@@ -1284,14 +1181,7 @@ export default function MapViewPage() {
       document.head.appendChild(script);
     };
 
-    console.log({ sortedLocations, mapRef });
-
     const initializeMap = () => {
-      // console.log(
-      //   '🚀 ~ initializeMap ~ sortedLocations:',
-      //   map.current,
-      //   sortedLocations
-      // );
       if (!mapRef.current || !sortedLocations.length) return;
 
       // Calculate center point from all locations
@@ -1590,7 +1480,6 @@ export default function MapViewPage() {
                         onUpdateTime={handleUpdateTime}
                         onHighlightMarker={highlightMarker}
                         onShowInfoWindow={showInfoWindow}
-                        onRemove={handleRemoveItem}
                       />
                     );
                   })}

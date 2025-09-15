@@ -249,7 +249,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className='container mx-auto px-4 py-16 bg-white/50'>
+      {/* <section className='container mx-auto px-4 py-16 bg-white/50'>
         <div className='text-center mb-12'>
           <h3 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
             Why Choose Our Wine Tour Planner?
@@ -351,7 +351,7 @@ export default function LandingPage() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className='bg-vineyard-500 text-white py-16'>

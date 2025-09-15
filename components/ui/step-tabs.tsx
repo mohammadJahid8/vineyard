@@ -42,7 +42,7 @@ export function StepTabs({ tabs, currentTab }: StepTabsProps) {
             const TabContent = (
               <div
                 className={cn(
-                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-base flex items-center gap-2 transition-colors duration-200',
                   {
                     'border-vineyard-500 text-vineyard-600':
                       isCurrent && !isLocked,

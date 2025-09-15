@@ -208,9 +208,9 @@ export default function SignInForm() {
           </>
         ) : (
           <form onSubmit={handleOTPSubmit} className='space-y-4'>
-            <div className='space-y-2'>
+            <div className='space-y-2 text-center'>
               <Label htmlFor='otp'>Verification Code</Label>
-              <div className='flex justify-center'>
+              <div className='flex justify-center mt-2'>
                 <InputOTP
                   maxLength={6}
                   value={otp}

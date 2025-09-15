@@ -113,6 +113,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.85.6
         version: 5.85.6(react@19.1.1)
+      '@types/google.maps':
+        specifier: ^3.58.1
+        version: 3.58.1
       '@types/mongoose':
         specifier: ^5.11.97
         version: 5.11.97
@@ -1549,6 +1552,9 @@ packages:
 
   '@types/d3-timer@3.0.2':
     resolution: {integrity: sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw==}
+
+  '@types/google.maps@3.58.1':
+    resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==}
 
   '@types/mongoose@5.11.97':
     resolution: {integrity: sha512-cqwOVYT3qXyLiGw7ueU2kX9noE8DPGRY6z8eUxudhXY8NZ7DMKYAxyZkLSevGfhCX3dO/AoX5/SO9lAzfjon0Q==}
@@ -3950,6 +3956,8 @@ snapshots:
   '@types/d3-time@3.0.4': {}
 
   '@types/d3-timer@3.0.2': {}
+
+  '@types/google.maps@3.58.1': {}
 
   '@types/mongoose@5.11.97':
     dependencies:

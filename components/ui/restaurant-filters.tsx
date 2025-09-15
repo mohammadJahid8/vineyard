@@ -27,7 +27,7 @@ const typeOptions = [
   { value: 'French', label: 'French' },
   { value: 'Brasserie', label: 'Brasserie' },
   { value: 'Wine Bar', label: 'Wine Bar' },
-  { value: 'Steak', label: 'Steak' },
+  // { value: 'Steak', label: 'Steak' },
   { value: 'Seafood', label: 'Seafood' },
 ];
 
@@ -218,7 +218,7 @@ export function RestaurantFilters({
     () => (
       <>
         {/* Filter Row */}
-        <div className='grid grid-cols-1 md:grid-cols-12 gap-4 mb-4'>
+        <div className='grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 mb-4'>
           {/* Location Filter */}
           <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
@@ -308,7 +308,7 @@ export function RestaurantFilters({
           </div>
 
           {/* Search Filter */}
-          <div className='md:col-span-3'>
+          <div className='md:col-span-2'>
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>
               Search
             </Label>
@@ -325,10 +325,10 @@ export function RestaurantFilters({
           </div>
 
           {/* Action Buttons */}
-          <div className='flex items-end gap-2 md:col-span-1'>
+          <div className='flex items-end gap-2 md:col-span-2'>
             <Button
               onClick={applyFilters}
-              className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3'
+              className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3 w-full'
             >
               Go
             </Button>
@@ -336,7 +336,7 @@ export function RestaurantFilters({
               variant='outline'
               onClick={clearFilters}
               disabled={!hasActiveFilters}
-              className='h-9 px-3'
+              className='h-9 px-3 w-full'
             >
               Clear
             </Button>

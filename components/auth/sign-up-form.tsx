@@ -14,35 +14,40 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Key, Loader2 } from 'lucide-react';
+import { Mail, User, Loader2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SignUpForm() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [otp, setOTP] = useState('');
-  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [step, setStep] = useState<'form' | 'success'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/auth/otp/send', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+        }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setStep('otp');
+        setStep('success');
       } else {
-        setError(data.message || 'Failed to send OTP');
+        setError(data.message || 'Failed to create account');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');
@@ -51,33 +56,8 @@ export default function SignUpForm() {
     }
   };
 
-  const handleOTPSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const result = await signIn('otp', {
-        email,
-        otp,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Invalid OTP. Please try again.');
-      } else if (result?.ok) {
-        // Get session to redirect properly
-        const session = await getSession();
-        if (session) {
-          router.push('/plans');
-          router.refresh();
-        }
-      }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleGoToSignIn = () => {
+    router.push('/sign-in');
   };
 
   const handleGoogleSignUp = async () => {
@@ -91,19 +71,21 @@ export default function SignUpForm() {
   };
 
   const resetForm = () => {
-    setStep('email');
-    setOTP('');
+    setStep('form');
+    setFirstName('');
+    setLastName('');
+    setEmail('');
     setError('');
   };
 
   return (
-    <Card className='shadow-xl border-0 bg-white'>
+    <Card className='shadow border-0 bg-white'>
       <CardHeader className='space-y-1'>
         <CardTitle className='text-2xl text-center'>Create Account</CardTitle>
         <CardDescription className='text-center'>
-          {step === 'email'
-            ? 'Enter your email to get started'
-            : 'Enter the 6-digit code sent to your email'}
+          {step === 'form'
+            ? 'Enter your details to create your account'
+            : 'Account created successfully!'}
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
@@ -113,9 +95,43 @@ export default function SignUpForm() {
           </div>
         )}
 
-        {step === 'email' ? (
+        {step === 'form' ? (
           <>
-            <form onSubmit={handleEmailSubmit} className='space-y-4'>
+            <form onSubmit={handleFormSubmit} className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='firstName'>First Name</Label>
+                  <div className='relative'>
+                    <User className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
+                    <Input
+                      id='firstName'
+                      type='text'
+                      placeholder='First name'
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className='pl-10'
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='lastName'>Last Name</Label>
+                  <div className='relative'>
+                    <User className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
+                    <Input
+                      id='lastName'
+                      type='text'
+                      placeholder='Last name'
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className='pl-10'
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
               <div className='space-y-2'>
                 <Label htmlFor='email'>Email</Label>
                 <div className='relative'>
@@ -140,10 +156,10 @@ export default function SignUpForm() {
                 {loading ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Sending...
+                    Creating Account...
                   </>
                 ) : (
-                  'Send Verification Code'
+                  'Create Account'
                 )}
               </Button>
             </form>
@@ -187,51 +203,35 @@ export default function SignUpForm() {
             </Button>
           </>
         ) : (
-          <form onSubmit={handleOTPSubmit} className='space-y-4'>
+          <div className='space-y-6 text-center'>
+            <div className='mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center'>
+              <CheckCircle className='w-8 h-8 text-green-600' />
+            </div>
             <div className='space-y-2'>
-              <Label htmlFor='otp'>Verification Code</Label>
-              <div className='relative'>
-                <Key className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
-                <Input
-                  id='otp'
-                  type='text'
-                  placeholder='Enter 6-digit code'
-                  value={otp}
-                  onChange={(e) => setOTP(e.target.value)}
-                  className='pl-10 text-center text-lg tracking-widest'
-                  maxLength={6}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <p className='text-sm text-gray-500 text-center'>
-                Code sent to {email}
+              <h3 className='text-lg font-semibold text-gray-900'>
+                Account Created Successfully!
+              </h3>
+              <p className='text-gray-600'>
+                Your account has been created with email{' '}
+                <strong>{email}</strong>. You can now sign in to access your
+                account.
               </p>
             </div>
             <Button
-              type='submit'
+              onClick={handleGoToSignIn}
               className='w-full bg-vineyard-500 hover:bg-vineyard-600'
-              disabled={loading || otp.length !== 6}
             >
-              {loading ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Creating Account...
-                </>
-              ) : (
-                'Verify & Create Account'
-              )}
+              Continue to Sign In
             </Button>
             <Button
               type='button'
               variant='ghost'
               className='w-full'
               onClick={resetForm}
-              disabled={loading}
             >
-              Use different email
+              Create Another Account
             </Button>
-          </form>
+          </div>
         )}
 
         <div className='text-center text-sm'>

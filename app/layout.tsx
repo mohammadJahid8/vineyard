@@ -25,7 +25,7 @@ export default function RootLayout({
         <SessionProvider>
           <SimpleSubscriptionProvider>
             <TripProvider>
-              <div className='min-h-screen pb-16'>{children}</div>
+              <div className='min-h-screen'>{children}</div>
             </TripProvider>
           </SimpleSubscriptionProvider>
         </SessionProvider>
