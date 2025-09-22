@@ -140,6 +140,10 @@ export function VineyardFilters({
     setAppliedFilters(finalFilters);
     updateURL(finalFilters);
     onFiltersChange(finalFilters);
+    window.scrollTo({
+      top: document.getElementById('vineyards')?.offsetTop,
+      behavior: 'smooth',
+    });
   }, [
     tempFilters,
     searchInput,
@@ -214,7 +218,7 @@ export function VineyardFilters({
         <div className='grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 mb-4'>
           {/* Area Filter */}
           <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Area
             </Label>
             <Select
@@ -236,7 +240,7 @@ export function VineyardFilters({
 
           {/* Type Filter */}
           <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Type
             </Label>
             <Select
@@ -258,7 +262,7 @@ export function VineyardFilters({
 
           {/* Cost Filter */}
           <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Cost
             </Label>
             <Select
@@ -278,9 +282,22 @@ export function VineyardFilters({
             </Select>
           </div>
 
+          {/* Experience Filter */}
+          <div className='md:col-span-2'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
+              Experience Type
+            </Label>
+            <MultiSelect
+              options={experienceOptions}
+              selected={tempFilters.experience}
+              onChange={handleExperienceChange}
+              placeholder='Select experiences...'
+            />
+          </div>
+
           {/* Search Filter */}
           <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Search
             </Label>
             <div className='relative'>
@@ -294,20 +311,6 @@ export function VineyardFilters({
               />
             </div>
           </div>
-
-          {/* Experience Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Experience Type
-            </Label>
-            <MultiSelect
-              options={experienceOptions}
-              selected={tempFilters.experience}
-              onChange={handleExperienceChange}
-              placeholder='Select experiences...'
-            />
-          </div>
-
           {/* Action Buttons */}
           <div className='flex items-end gap-2 md:col-span-2'>
             <Button
@@ -330,7 +333,7 @@ export function VineyardFilters({
         {/* Validation Error */}
         {showValidationError && (
           <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-            <p className='text-sm text-red-600 font-medium'>
+            <p className='md:text-xl text-red-600 font-medium'>
               Please select the following filters before searching:{' '}
               {getMissingRequiredFilters.join(', ')}
             </p>
@@ -499,13 +502,17 @@ export function VineyardFilters({
 
       {/* Desktop Filters - Always Visible */}
       <div className='hidden md:block'>
-        <Card className='p-6'>{FilterContent}</Card>
+        <Card className='p-6 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 border border-green-200 shadow-md'>
+          {FilterContent}
+        </Card>
       </div>
 
       {/* Mobile Filters - Collapsible */}
       {showMobileFilters && (
         <div className='md:hidden mb-4'>
-          <Card className='p-4'>{FilterContent}</Card>
+          <Card className='p-4 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 border border-green-200 shadow-md'>
+            {FilterContent}
+          </Card>
         </div>
       )}
     </div>

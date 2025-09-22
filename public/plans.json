@@ -1,7 +1,7 @@
 [
   {
     "plan_id": "free",
-    "name": "Free",
+    "name": "Basic",
     "price": "Next",
     "duration": "3 Days",
     "vineyard_selection": "4",

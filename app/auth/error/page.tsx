@@ -30,7 +30,7 @@ export default function AuthError() {
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-vineyard-50 to-vineyard-100 p-4'>
-      <Card className='w-full max-w-md shadow-xl border-0 bg-white'>
+      <Card className='w-full max-w-md shadow-none border border-gray-200 bg-white'>
         <CardHeader className='text-center'>
           <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100'>
             <AlertTriangle className='h-6 w-6 text-red-600' />

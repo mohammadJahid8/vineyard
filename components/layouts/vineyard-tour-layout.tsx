@@ -7,12 +7,12 @@ import { SimpleAccessGuard } from '@/components/simple-access-guard';
 const tabs = [
   { id: 'vineyard', title: 'Vineyard', href: '/explore' },
   { id: 'lunch', title: 'Lunch', href: '/explore/lunch' },
-  { id: 'plan', title: 'Plan', href: '/explore/plan' },
+  { id: 'trip', title: 'Trip', href: '/explore/trip' },
 ];
 
 interface VineyardTourLayoutProps {
   children: React.ReactNode;
-  currentStep: 'vineyard' | 'plan' | 'lunch';
+  currentStep: 'vineyard' | 'trip' | 'lunch';
   title?: string;
   subtitle?: string;
 }
@@ -33,7 +33,9 @@ export default function VineyardTourLayout({
         {children}
 
         {/* Bottom Navigation */}
-        <BottomNavigation />
+        <div className='mt-32'>
+          <BottomNavigation />
+        </div>
       </div>
     </SimpleAccessGuard>
   );

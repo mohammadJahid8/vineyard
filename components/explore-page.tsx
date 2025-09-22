@@ -152,6 +152,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
       })
       .slice(0, 10); // Limit to top 10 vineyards
   }, [vineyards, filters]);
+  console.log({ filteredVineyards });
 
   // Pagination
   const totalPages = Math.ceil(filteredVineyards.length / ITEMS_PER_PAGE);
@@ -192,110 +193,126 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
     return trip.vineyards.some((v) => v.vineyard.vineyard_id === vineyardId);
   };
 
+  console.log({ trip, paginatedVineyards });
+
+  const hasVineyards =
+    filteredVineyards.length > 0 || trip.vineyards.length > 0;
+
   return (
     <VineyardTourLayout currentStep='vineyard'>
       <NavigationWarning />
       {/* Filters */}
       <div className='container mx-auto px-4 mt-6'>
+        <h2 className='text-xl md:text-2xl font-bold text-gray-900 mb-4'>
+          Explore
+        </h2>
         <VineyardFilters onFiltersChange={handleFiltersChange} />
-      </div>
 
-      {/* Results Header */}
-      <div className='container mx-auto px-4 py-6'>
-        <div className='flex items-center justify-between mb-6'>
-          <div>
-            <h2 className='text-2xl font-bold text-gray-900'>
-              Explore Vineyards
+        {/* Selected Vineyards Display */}
+        {trip.vineyards.length > 0 && (
+          <div className='mt-10'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-4'>
+              Selected Vineyards
             </h2>
-            <p className='text-gray-600 mt-1'>
-              {filteredVineyards.length} vineyard
-              {filteredVineyards.length !== 1 ? 's' : ''} found
-            </p>
-            {/* {trip.vineyards.length > 0 && (
-              <p className='text-sm text-vineyard-600 mt-1'>
-                {trip.vineyards.length}/{MAX_VINEYARDS} vineyards selected
-              </p>
-            )} */}
-          </div>
-          {trip.vineyards.length > 0 && (
-            <div className='flex gap-2'>
-              <Button
-                className='bg-vineyard-500 hover:bg-vineyard-600'
-                onClick={() => router.push('/explore/lunch')}
-                disabled={trip.vineyards.length === 0}
-              >
-                Next: Lunch
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Vineyard Grid */}
-        {paginatedVineyards.length > 0 ? (
-          <>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
-              {paginatedVineyards.map((vineyard) => (
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {trip.vineyards.map((tripVineyard) => (
                 <VineyardCard
-                  key={vineyard.vineyard_id}
-                  vineyard={vineyard}
-                  offers={getVineyardOffers(vineyard.vineyard_id)}
+                  key={tripVineyard.vineyard.vineyard_id}
+                  vineyard={tripVineyard.vineyard}
+                  offers={
+                    tripVineyard.offer
+                      ? [tripVineyard.offer]
+                      : getVineyardOffers(tripVineyard.vineyard.vineyard_id)
+                  }
                   onAddToTrip={handleAddToTrip}
                   onRemoveFromTrip={handleRemoveFromTrip}
-                  isInTrip={isVineyardInTrip(vineyard.vineyard_id)}
+                  isInTrip={true}
                 />
               ))}
             </div>
-
-            {/* Pagination */}
-            <PaginationCustom
-              currentPage={currentPage}
-              totalPages={totalPages}
-              baseUrl='/explore'
-              className='mb-8'
-            />
-          </>
-        ) : (
-          <div className='text-center py-12'>
-            <div className='mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit'>
-              <Grape className='h-8 w-8 text-gray-400' />
-            </div>
-            {!hasAllRequiredFilters ? (
-              <>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                  Select All Filters to Search
-                </h3>
-                <p className='text-gray-600 mb-4'>
-                  Please select the following filters to discover vineyards:{' '}
-                  {getMissingFilters.join(', ')}
-                </p>
-              </>
-            ) : (
-              <>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                  No vineyards found
-                </h3>
-                <p className='text-gray-600 mb-4'>
-                  Try adjusting your filters to see more results.
-                </p>
-                <Button
-                  variant='outline'
-                  onClick={() =>
-                    setFilters({
-                      area: '',
-                      type: '',
-                      cost: '',
-                      experience: [],
-                      search: '',
-                    })
-                  }
-                >
-                  Clear All Filters
-                </Button>
-              </>
-            )}
           </div>
         )}
       </div>
+
+      {/* Results Header */}
+      {filteredVineyards.length > 0 && (
+        <div className='container mx-auto px-4 py-6' id='vineyards'>
+          <div className='mb-4'>
+            <h2 className='text-2xl font-bold text-gray-900'>Vineyards</h2>
+            <p className='text-gray-600 mt-1'>
+              {filteredVineyards.length} found
+            </p>
+          </div>
+
+          {/* Vineyard Grid */}
+          {paginatedVineyards.length > 0 ? (
+            <>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+                {paginatedVineyards.map((vineyard) => (
+                  <VineyardCard
+                    key={vineyard.vineyard_id}
+                    vineyard={vineyard}
+                    offers={getVineyardOffers(vineyard.vineyard_id)}
+                    onAddToTrip={handleAddToTrip}
+                    onRemoveFromTrip={handleRemoveFromTrip}
+                    isInTrip={isVineyardInTrip(vineyard.vineyard_id)}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <PaginationCustom
+                currentPage={currentPage}
+                totalPages={totalPages}
+                baseUrl='/explore'
+                className='mb-8'
+              />
+            </>
+          ) : (
+            <div className='text-center py-12'>
+              {!hasAllRequiredFilters ? (
+                <></>
+              ) : (
+                <>
+                  <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                    No vineyards found
+                  </h3>
+                  <p className='text-gray-600 mb-4'>
+                    Try adjusting your filters to see more results.
+                  </p>
+                  <Button
+                    variant='outline'
+                    onClick={() =>
+                      setFilters({
+                        area: '',
+                        type: '',
+                        cost: '',
+                        experience: [],
+                        search: '',
+                      })
+                    }
+                  >
+                    Clear All Filters
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Fixed Next Button - Bottom Right */}
+        </div>
+      )}
+
+      {hasVineyards && (
+        <div className='container mx-auto px-4 mt-4 flex justify-end'>
+          <Button
+            className='bg-vineyard-500 hover:bg-vineyard-600'
+            onClick={() => router.push('/explore/lunch')}
+          >
+            Next: Lunch
+          </Button>
+        </div>
+      )}
     </VineyardTourLayout>
   );
 }

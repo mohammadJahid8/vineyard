@@ -34,13 +34,7 @@ export function SimpleAccessGuard({ children }: SimpleAccessGuardProps) {
   if (subscription.loading || session === undefined) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100 flex items-center justify-center'>
-        <Card className='w-full max-w-md'>
-          <CardContent className='flex flex-col items-center justify-center py-12'>
-            <Loader2 className='h-8 w-8 animate-spin text-vineyard-500 mb-4' />
-            <h3 className='text-lg font-semibold mb-2'>Loading...</h3>
-            <p className='text-gray-600 text-center'>Please wait...</p>
-          </CardContent>
-        </Card>
+        <h3 className='text-lg font-semibold mb-2'>Loading...</h3>
       </div>
     );
   }

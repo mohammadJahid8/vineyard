@@ -1441,7 +1441,7 @@ export default function MapViewPage() {
   if (loading) {
     return (
       <VineyardTourLayout
-        currentStep='plan'
+        currentStep='trip'
         title='Map View'
         subtitle='Interactive route map'
       >
@@ -1461,7 +1461,7 @@ export default function MapViewPage() {
   if (error) {
     return (
       <VineyardTourLayout
-        currentStep='plan'
+        currentStep='trip'
         title='Map View'
         subtitle='Interactive route map'
       >
@@ -1474,7 +1474,7 @@ export default function MapViewPage() {
             <p className='text-gray-600 mb-6'>{error}</p>
             <div className='space-x-3'>
               <Button
-                onClick={() => router.push('/explore/plan')}
+                onClick={() => router.push('/explore/trip')}
                 variant='outline'
               >
                 Back to Plan
@@ -1495,7 +1495,7 @@ export default function MapViewPage() {
   if (!plan || plan.vineyards.length === 0) {
     return (
       <VineyardTourLayout
-        currentStep='plan'
+        currentStep='trip'
         title='Map View'
         subtitle='Interactive route map'
       >
@@ -1508,7 +1508,7 @@ export default function MapViewPage() {
             Your plan doesn't have any confirmed locations to display on the map
           </p>
           <Button
-            onClick={() => router.push('/explore/plan')}
+            onClick={() => router.push('/explore/trip')}
             className='bg-green-600 hover:bg-green-700 text-white'
           >
             Back to Plan
@@ -1520,7 +1520,7 @@ export default function MapViewPage() {
 
   return (
     <VineyardTourLayout
-      currentStep='plan'
+      currentStep='trip'
       title='Map View'
       subtitle='Interactive route map'
     >

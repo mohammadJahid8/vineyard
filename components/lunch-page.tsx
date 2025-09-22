@@ -71,7 +71,10 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
           const searchTerm = filters.search.toLowerCase();
           const restaurantName = restaurant.restaurants?.toLowerCase() || '';
           const subRegion = restaurant.sub_region?.toLowerCase() || '';
-          const type = restaurant.actual_type?.toLowerCase() || '';
+          const type =
+            restaurant.actual_type?.toLowerCase() ||
+            restaurant.approx_google_type?.toLowerCase() ||
+            '';
 
           if (
             !restaurantName.includes(searchTerm) &&
@@ -183,7 +186,7 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     if (restaurant) {
       addRestaurant(restaurant);
       // Navigate to plan page to show the added restaurant
-      router.push('/explore/plan');
+      router.push('/explore/trip');
     }
   };
 
@@ -199,6 +202,10 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     }
   }, [trip.vineyards.length, router]);
 
+  const hasRestaurants = useMemo(() => {
+    return trip.restaurant || filteredRestaurants.length > 0;
+  }, [filteredRestaurants]);
+
   return (
     <VineyardTourLayout
       currentStep='lunch'
@@ -208,104 +215,116 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
       <NavigationWarning />
       {/* Filters */}
       <div className='container mx-auto px-4 mt-6'>
+        <h2 className='text-xl md:text-2xl font-bold text-gray-900 mb-4'>
+          Explore
+        </h2>
         <RestaurantFilters onFiltersChange={handleFiltersChange} />
+
+        {/* Selected Restaurant Display */}
+        {trip.restaurant && (
+          <div className='mt-10'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-4'>
+              Selected Restaurant
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              <RestaurantCard
+                key={trip.restaurant.restaurant.id}
+                restaurant={trip.restaurant.restaurant}
+                onAddToTrip={handleAddToTrip}
+                onRemoveFromTrip={handleRemoveFromTrip}
+                isInTrip={true}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Results Header */}
-      <div className='container mx-auto px-4 py-6'>
-        <div className='flex items-center justify-between mb-6'>
-          <div>
-            <h2 className='text-2xl font-bold text-gray-900'>
-              Explore Restaurants
-            </h2>
+      {filteredRestaurants.length > 0 && (
+        <div className='container mx-auto px-4 py-6' id='restaurants'>
+          <div className='mb-4'>
+            <h2 className='text-2xl font-bold text-gray-900'>Restaurants</h2>
             <p className='text-gray-600 mt-1'>
-              {filteredRestaurants.length} restaurant
-              {filteredRestaurants.length !== 1 ? 's' : ''} found
+              {filteredRestaurants.length} found
             </p>
           </div>
-          <div className='flex items-center gap-4'>
-            {/* {trip.vineyards.length > 0 && (
-              <p className='text-sm text-vineyard-600'>
-                {trip.vineyards.length}/3 vineyards selected
-              </p>
-            )} */}
-            {(trip.restaurant || trip.vineyards.length > 0) && (
-              <Button
-                className='bg-vineyard-500 hover:bg-vineyard-600'
-                onClick={() => router.push('/explore/plan')}
-              >
-                Next: Plan
-              </Button>
-            )}
-          </div>
+
+          {/* Restaurant Grid */}
+          {paginatedRestaurants.length > 0 ? (
+            <>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+                {paginatedRestaurants.map((restaurant) => (
+                  <RestaurantCard
+                    key={restaurant.id}
+                    restaurant={restaurant}
+                    onAddToTrip={handleAddToTrip}
+                    onRemoveFromTrip={handleRemoveFromTrip}
+                    isInTrip={trip.restaurant?.restaurant.id === restaurant.id}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <PaginationCustom
+                currentPage={currentPage}
+                totalPages={totalPages}
+                baseUrl='/explore/lunch'
+                className='mb-8'
+              />
+            </>
+          ) : (
+            <div className='text-center py-12'>
+              <div className='mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit'>
+                <Utensils className='h-8 w-8 text-gray-400' />
+              </div>
+              {!hasAllRequiredFilters ? (
+                <>
+                  <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                    Select All Filters to Search
+                  </h3>
+                  <p className='text-gray-600 mb-4'>
+                    Please select the following filters to discover restaurants:{' '}
+                    {getMissingFilters.join(', ')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className='text-lg font-medium text-gray-900 mb-2'>
+                    No restaurants found
+                  </h3>
+                  <p className='text-gray-600 mb-4'>
+                    Try adjusting your filters to see more results.
+                  </p>
+                  <Button
+                    variant='outline'
+                    onClick={() =>
+                      setFilters({
+                        area: '',
+                        type: '',
+                        cost: '',
+                        rating: 'all',
+                        search: '',
+                        distance: 'all',
+                        startingPoint: 'all',
+                      })
+                    }
+                  >
+                    Clear All Filters
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Restaurant Grid */}
-        {paginatedRestaurants.length > 0 ? (
-          <>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
-              {paginatedRestaurants.map((restaurant) => (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  onAddToTrip={handleAddToTrip}
-                  onRemoveFromTrip={handleRemoveFromTrip}
-                  isInTrip={trip.restaurant?.restaurant.id === restaurant.id}
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <PaginationCustom
-              currentPage={currentPage}
-              totalPages={totalPages}
-              baseUrl='/explore/lunch'
-              className='mb-8'
-            />
-          </>
-        ) : (
-          <div className='text-center py-12'>
-            <div className='mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit'>
-              <Utensils className='h-8 w-8 text-gray-400' />
-            </div>
-            {!hasAllRequiredFilters ? (
-              <>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                  Select All Filters to Search
-                </h3>
-                <p className='text-gray-600 mb-4'>
-                  Please select the following filters to discover restaurants:{' '}
-                  {getMissingFilters.join(', ')}
-                </p>
-              </>
-            ) : (
-              <>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                  No restaurants found
-                </h3>
-                <p className='text-gray-600 mb-4'>
-                  Try adjusting your filters to see more results.
-                </p>
-                <Button
-                  variant='outline'
-                  onClick={() =>
-                    setFilters({
-                      area: '',
-                      type: '',
-                      cost: '',
-                      rating: 'all',
-                      search: '',
-                      distance: 'all',
-                      startingPoint: 'all',
-                    })
-                  }
-                >
-                  Clear All Filters
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+      <div className='container mx-auto px-4 flex justify-end mt-4'>
+        <Button
+          className='bg-vineyard-500 hover:bg-vineyard-600'
+          onClick={() => router.push('/explore/trip')}
+        >
+          {hasRestaurants ? 'Next: Trip' : 'Skip'}
+        </Button>
       </div>
     </VineyardTourLayout>
   );

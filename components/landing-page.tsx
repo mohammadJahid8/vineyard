@@ -1,30 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useSession } from 'next-auth/react';
-import {
-  Check,
-  Grape,
-  ArrowRight,
-  Star,
-  MapPin,
-  Clock,
-  Users,
-  Shield,
-  Zap,
-  Crown,
-  Gift,
-  Menu,
-  X,
-} from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -36,65 +14,28 @@ export default function LandingPage() {
   return (
     <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100'>
       {/* Header */}
-      <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50'>
+      {/* <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50'>
         <div className='container mx-auto px-4 py-4'>
           <div className='flex justify-between items-center'>
             <div className='flex items-center space-x-3'>
-              <Grape className='h-8 w-8 text-vineyard-500' />
-              <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
-                  Vineyard Tour Planner
-                </h1>
-              </div>
+              <Image
+                src='/vineyard.png'
+                alt='Vineyard Tour Planner'
+                width={60}
+                height={60}
+              />
             </div>
 
-            {/* Desktop Navigation */}
+            
             <div className='hidden md:flex items-center space-x-4'>
-              {session ? (
-                <>
-                  <Link href='/plans'>
-                    <Button
-                      variant='outline'
-                      className='border-vineyard-500 text-vineyard-700 hover:bg-vineyard-50'
-                    >
-                      View Plans
-                    </Button>
-                  </Link>
-                  <Link href='/explore'>
-                    <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                      Explore Tours
-                      <ArrowRight className='w-4 h-4 ml-2' />
-                    </Button>
-                  </Link>
-                  <div className='flex items-center space-x-2'>
-                    <Button
-                      onClick={() =>
-                        (window.location.href = '/api/auth/signout')
-                      }
-                      variant='ghost'
-                      size='sm'
-                    >
-                      Sign Out
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Link href='/sign-in'>
-                    <Button variant='ghost' className='text-gray-700'>
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href='/sign-up'>
-                    <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
-              )}
+              <Link href='/sign-up'>
+                <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
+                  Get Started
+                </Button>
+              </Link>
             </div>
 
-            {/* Mobile menu button */}
+           
             <div className='md:hidden'>
               <Button
                 variant='ghost'
@@ -110,7 +51,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Mobile Navigation */}
+      
           {mobileMenuOpen && (
             <div className='md:hidden mt-4 pb-4 border-t pt-4'>
               <div className='flex flex-col space-y-2'>
@@ -155,11 +96,19 @@ export default function LandingPage() {
             </div>
           )}
         </div>
-      </header>
+      </header> */}
 
       {/* Hero Section */}
       <section className='container mx-auto px-4 py-16 lg:py-24 text-center'>
         <div className='max-w-4xl mx-auto'>
+          <Image
+            src='/vineyard.png'
+            alt='Vineyard Tour Planner'
+            width={100}
+            height={100}
+            className='mx-auto mb-10'
+          />
+
           <h2 className='text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6'>
             Plan a Perfect
             <br />
@@ -184,23 +133,11 @@ export default function LandingPage() {
           />
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center mb-12'>
-            {session ? (
-              <Link href='/explore'>
-                <Button
-                  size='lg'
-                  className='bg-vineyard-500 hover:bg-vineyard-600 text-white px-8 py-4 text-lg'
-                >
-                  Start Planning
-                  <ArrowRight className='w-5 h-5 ml-2' />
-                </Button>
-              </Link>
-            ) : (
-              <Link href='/sign-up'>
-                <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                  Sign Up
-                </Button>
-              </Link>
-            )}
+            <Link href={session ? '/explore' : '/sign-up'}>
+              <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* What You Get Section */}
@@ -239,9 +176,12 @@ export default function LandingPage() {
               <li className='flex items-start'>
                 <span className='mr-2'>•</span>
                 Make bookings{' '}
-                <span className='text-blue-600 cursor-pointer hover:underline'>
-                  (Click here for our Personalized Custom Planning Option)
-                </span>
+                <a
+                  href='mailto:contact@champagne-tour.com'
+                  className='text-blue-600 ml-2 cursor-pointer hover:underline'
+                >
+                  contact@champagne-tour.com
+                </a>
               </li>
             </ul>
           </div>
@@ -359,77 +299,18 @@ export default function LandingPage() {
           <h3 className='text-3xl md:text-4xl font-bold mb-4'>
             Ready to Start Your Wine Adventure?
           </h3>
-          <p className='text-xl mb-8 max-w-2xl mx-auto'>
+          <p className='text-xl max-w-2xl mx-auto'>
             Join thousands of wine lovers who have discovered their perfect
             vineyard experiences with our expert guidance.
           </p>
-          {session ? (
-            <Link href='/plans'>
-              <Button
-                size='lg'
-                className='bg-white text-vineyard-600 hover:bg-gray-100 px-8 py-4 text-lg'
-              >
-                Choose Your Plan
-                <ArrowRight className='w-5 h-5 ml-2' />
-              </Button>
-            </Link>
-          ) : (
-            <Link href='/sign-up'>
-              <Button
-                size='lg'
-                className='bg-white text-vineyard-600 hover:bg-gray-100 px-8 py-4 text-lg'
-              >
-                Start Your Free Tour
-                <ArrowRight className='w-5 h-5 ml-2' />
-              </Button>
-            </Link>
-          )}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className='bg-gray-900 text-white py-12'>
+      <footer className='bg-gray-900 text-white py-6'>
         <div className='container mx-auto px-4'>
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
-            <div>
-              <div className='flex items-center space-x-2 mb-4'>
-                <Grape className='h-6 w-6 text-vineyard-400' />
-                <span className='text-lg font-bold'>Vineyard Tour Planner</span>
-              </div>
-              <p className='text-gray-400'>
-                Your trusted companion for unforgettable wine experiences.
-              </p>
-            </div>
-            <div>
-              <h4 className='font-semibold mb-4'>Features</h4>
-              <ul className='space-y-2 text-gray-400'>
-                <li>AI-Powered Planning</li>
-                <li>Expert Curation</li>
-                <li>Route Optimization</li>
-                <li>Premium Experiences</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className='font-semibold mb-4'>Plans</h4>
-              <ul className='space-y-2 text-gray-400'>
-                <li>Free Plan</li>
-                <li>Plus Plan</li>
-                <li>Premium Plan</li>
-                <li>Pro Plan</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className='font-semibold mb-4'>Support</h4>
-              <ul className='space-y-2 text-gray-400'>
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>Privacy Policy</li>
-                <li>Terms of Service</li>
-              </ul>
-            </div>
-          </div>
-          <div className='border-t border-gray-800 mt-8 pt-8 text-center text-gray-400'>
-            <p>&copy; 2024 Vineyard Tour Planner. All rights reserved.</p>
+          <div className='text-center text-gray-400'>
+            <p>&copy; 2025 Vineyard. All rights reserved.</p>
           </div>
         </div>
       </footer>

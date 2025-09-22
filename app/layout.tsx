@@ -5,6 +5,7 @@ import './globals.css';
 import { TripProvider } from '@/lib/context/trip-context';
 import { SimpleSubscriptionProvider } from '@/lib/context/simple-subscription-context';
 import { SessionProvider } from '@/components/session-provider';
+import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,13 +23,15 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={inter.className}>
-        <SessionProvider>
-          <SimpleSubscriptionProvider>
-            <TripProvider>
-              <div className='min-h-screen'>{children}</div>
-            </TripProvider>
-          </SimpleSubscriptionProvider>
-        </SessionProvider>
+        <Suspense>
+          <SessionProvider>
+            <SimpleSubscriptionProvider>
+              <TripProvider>
+                <div className='min-h-screen'>{children}</div>
+              </TripProvider>
+            </SimpleSubscriptionProvider>
+          </SessionProvider>
+        </Suspense>
       </body>
     </html>
   );

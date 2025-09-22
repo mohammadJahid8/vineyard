@@ -85,12 +85,12 @@ export default function PlansPage() {
         {/* Hero Section */}
         <div className='text-center mb-12'>
           <h2 className='text-3xl md:text-5xl font-bold text-gray-900 mb-4'>
-            Choose Your Tour Plan
+            Choose Your Plan
           </h2>
 
           <p className='md:text-lg text-gray-500 max-w-2xl mx-auto'>
-            Select the perfect plan for your vineyard adventure. Start with our
-            free plan and upgrade anytime.
+            Select the perfect plan for your vineyard adventure.
+            <br /> Start with our free plan and upgrade anytime.
           </p>
         </div>
 
@@ -99,20 +99,16 @@ export default function PlansPage() {
           {planOptions.map((plan) => (
             <Card
               key={plan.id}
-              className={`relative transition-all duration-300 hover:shadow-xl ${
-                plan.popular
-                  ? 'shadow-lg scale-105 border-vineyard-500 border-2'
-                  : 'border-gray-200'
-              }`}
+              className={`relative transition-all duration-300 hover:shadow-xl border-gray-200`}
             >
-              {plan.popular && (
+              {/* {plan.popular && (
                 <div className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
                   <Badge className='text-white px-3 py-1 bg-vineyard-500'>
                     <Star className='w-3 h-3 mr-1' />
                     Most Popular
                   </Badge>
                 </div>
-              )}
+              )} */}
 
               <CardHeader className='text-center pb-4'>
                 <div className='flex justify-center items-center mb-2 text-vineyard-500'>
@@ -186,7 +182,7 @@ export default function PlansPage() {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   onClick={() => handleSelectPlan(plan.id)}
-                  disabled={loading}
+                  disabled={loading || plan.id !== 'free'}
                 >
                   {plan.id === 'free' ? (
                     <>
@@ -196,7 +192,7 @@ export default function PlansPage() {
                   ) : (
                     <>
                       <Lock className='w-4 h-4 mr-2' />
-                      Coming Soon
+                      Coming
                     </>
                   )}
                 </Button>
@@ -413,7 +409,9 @@ export default function PlansPage() {
                 </div>
 
                 {/* Action Buttons - Fixed spacing */}
-                <div className='grid grid-cols-4 gap-2 p-3 bg-gray-50'>
+                <div className='grid grid-cols-5 gap-2 p-3 bg-gray-50'>
+                  <div></div>{' '}
+                  {/* Empty cell to align with feature name column */}
                   {planOptions.map((plan) => (
                     <Button
                       key={plan.id}
@@ -426,7 +424,7 @@ export default function PlansPage() {
                       onClick={() => handleSelectPlan(plan.id)}
                       disabled={loading}
                     >
-                      {plan.id === 'free' ? 'Start Free' : 'Coming Soon'}
+                      {plan.id === 'free' ? 'Start' : 'Coming'}
                     </Button>
                   ))}
                 </div>

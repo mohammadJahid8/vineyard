@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         { region: { $regex: search, $options: 'i' } },
         { sub_region: { $regex: search, $options: 'i' } },
         { actual_type: { $regex: search, $options: 'i' } },
+        { approx_google_type: { $regex: search, $options: 'i' } },
       ];
     }
 

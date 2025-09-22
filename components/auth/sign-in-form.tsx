@@ -110,7 +110,7 @@ export default function SignInForm() {
   };
 
   return (
-    <Card className='shadow-xl border-0 bg-white'>
+    <Card className='shadow-none border border-gray-200 bg-white'>
       <CardHeader className='space-y-1'>
         <CardTitle className='text-2xl text-center'>Sign In</CardTitle>
         <CardDescription className='text-center'>

@@ -24,10 +24,9 @@ interface RestaurantFiltersProps {
 }
 
 const typeOptions = [
-  { value: 'French', label: 'French' },
+  { value: 'French', label: 'So French' },
   { value: 'Brasserie', label: 'Brasserie' },
   { value: 'Wine Bar', label: 'Wine Bar' },
-  // { value: 'Steak', label: 'Steak' },
   { value: 'Seafood', label: 'Seafood' },
 ];
 
@@ -220,8 +219,8 @@ export function RestaurantFilters({
         {/* Filter Row */}
         <div className='grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 mb-4'>
           {/* Location Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          <div className='md:col-span-3'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Area
             </Label>
             <Select
@@ -242,8 +241,8 @@ export function RestaurantFilters({
           </div>
 
           {/* Type Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          <div className='md:col-span-3'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Type
             </Label>
             <Select
@@ -264,8 +263,8 @@ export function RestaurantFilters({
           </div>
 
           {/* Cost Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          <div className='md:col-span-3'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Cost
             </Label>
             <Select
@@ -286,8 +285,8 @@ export function RestaurantFilters({
           </div>
 
           {/* Distance Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          {/* <div className='md:col-span-2'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Distance
             </Label>
             <Select
@@ -305,11 +304,11 @@ export function RestaurantFilters({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           {/* Search Filter */}
-          <div className='md:col-span-2'>
-            <Label className='text-sm font-medium text-gray-700 mb-2 block'>
+          {/* <div className='md:col-span-2'>
+            <Label className='md:text-xl font-medium text-black mb-2 block'>
               Search
             </Label>
             <div className='relative'>
@@ -322,10 +321,10 @@ export function RestaurantFilters({
                 className='pl-10'
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
-          <div className='flex items-end gap-2 md:col-span-2'>
+          <div className='flex items-end gap-2 md:col-span-3'>
             <Button
               onClick={applyFilters}
               className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3 w-full'
@@ -346,7 +345,7 @@ export function RestaurantFilters({
         {/* Validation Error */}
         {showValidationError && (
           <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-            <p className='text-sm text-red-600 font-medium'>
+            <p className='md:text-xl text-red-600 font-medium'>
               Please select the following filters before searching:{' '}
               {getMissingRequiredFilters.join(', ')}
             </p>
@@ -521,13 +520,17 @@ export function RestaurantFilters({
 
       {/* Desktop Filters - Always Visible */}
       <div className='hidden md:block'>
-        <Card className='p-6'>{FilterContent}</Card>
+        <Card className='p-6 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 border border-green-200 shadow-md'>
+          {FilterContent}
+        </Card>
       </div>
 
       {/* Mobile Filters - Collapsible */}
       {showMobileFilters && (
         <div className='md:hidden mb-4'>
-          <Card className='p-4'>{FilterContent}</Card>
+          <Card className='p-4 bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 border border-green-200 shadow-md'>
+            {FilterContent}
+          </Card>
         </div>
       )}
     </div>

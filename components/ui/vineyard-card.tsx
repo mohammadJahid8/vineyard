@@ -98,7 +98,7 @@ export function VineyardCard({
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
-            <h3 className='text-lg font-bold text-gray-900 mb-1'>
+            <h3 className='text-xl font-bold text-gray-900 mb-1'>
               {vineyard.vineyard}
             </h3>
             <div className='flex items-center text-sm text-gray-600 mb-2'>
@@ -114,10 +114,7 @@ export function VineyardCard({
                 </span>
               </div>
               <div className='flex flex-col text-vineyard-600 font-medium'>
-                <span>{formatCostRange()}</span>
-                <span className='text-xs text-gray-500 font-normal'>
-                  cost per adult
-                </span>
+                <span>{formatCostRange()} pp</span>
               </div>
             </div>
           </div>
@@ -159,8 +156,8 @@ export function VineyardCard({
       <CardContent className='pt-0'>
         {/* Highlights */}
         {highlights.length > 0 && (
-          <div className='mb-4'>
-            <div className='flex items-center justify-between mb-3'>
+          <div className='mb-2'>
+            <div className='flex items-center justify-between'>
               <h4 className='text-sm font-semibold text-gray-900'>
                 Highlights ({highlights.length})
               </h4>
@@ -192,8 +189,8 @@ export function VineyardCard({
 
         {/* Offers */}
         {offers.length > 0 && (
-          <div className='border-t pt-4'>
-            <div className='flex items-center justify-between mb-3'>
+          <div className='border-t pt-2'>
+            <div className='flex items-center justify-between'>
               <h4 className='text-sm font-semibold text-gray-900'>
                 Offers ({offers.length})
               </h4>

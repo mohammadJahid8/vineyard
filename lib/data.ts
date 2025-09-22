@@ -3,7 +3,7 @@ import { Vineyard, Restaurant, PlanOption } from './types';
 export const planOptions: PlanOption[] = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Basic',
     price: 0,
     duration: '1 Day',
     features: {

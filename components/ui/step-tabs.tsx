@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Lock } from 'lucide-react';
+import { ArrowRight, ArrowRightCircle, Lock } from 'lucide-react';
 import { useTrip } from '@/lib/context/trip-context';
 
 interface Tab {
@@ -34,7 +34,7 @@ export function StepTabs({ tabs, currentTab }: StepTabsProps) {
     <div className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40'>
       <div className='container mx-auto px-4'>
         <nav className='flex justify-center space-x-8' aria-label='Tabs'>
-          {tabs.map((tab) => {
+          {tabs.map((tab, index) => {
             const status = getTabStatus(tab.id);
             const isLocked = status === 'locked';
             const isCurrent = tab.id === currentTab;
@@ -42,19 +42,23 @@ export function StepTabs({ tabs, currentTab }: StepTabsProps) {
             const TabContent = (
               <div
                 className={cn(
-                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-base flex items-center gap-2 transition-colors duration-200',
+                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium md:text-2xl flex items-center gap-2 transition-colors duration-200 text-black',
                   {
                     'border-vineyard-500 text-vineyard-600':
                       isCurrent && !isLocked,
-                    'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300':
+                    'border-transparent text-black hover:text-gray-700 hover:border-gray-300':
                       !isCurrent && !isLocked,
-                    'border-transparent text-gray-400 cursor-not-allowed':
+                    'border-transparent text-black cursor-not-allowed':
                       isLocked,
                   }
                 )}
               >
                 {isLocked && <Lock className='w-4 h-4' />}
                 {tab.title}
+
+                {index !== tabs.length - 1 && (
+                  <ArrowRightCircle className='md:size-8' />
+                )}
               </div>
             );
 

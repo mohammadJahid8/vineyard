@@ -27,9 +27,9 @@ const navigationItems = [
   },
   {
     id: 'plan',
-    label: 'Plan',
+    label: 'Trip',
     icon: FileText,
-    href: '/explore/plan',
+    href: '/explore/trip',
   },
   {
     id: 'profile',

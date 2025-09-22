@@ -88,7 +88,7 @@ export async function createFreeSubscriptionForUser(email: string) {
 
     // Create free subscription
     const expirationDate = new Date();
-    expirationDate.setMinutes(expirationDate.getMinutes() + 5); // 5 minutes for testing
+    expirationDate.setMinutes(expirationDate.getMinutes() + 30); // 5 minutes for testing
     
     user.selectedPlan = 'free';
     user.planSelectedAt = new Date();

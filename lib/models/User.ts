@@ -135,7 +135,7 @@ UserSchema.methods.createSubscription = function (planType = 'free') {
   const expirationDate = new Date();
   
   if (planType === 'free') {
-    expirationDate.setMinutes(expirationDate.getMinutes() + 5); // 5 minutes for testing
+    expirationDate.setMinutes(expirationDate.getMinutes() + 30); // 5 minutes for testing
   } else {
     expirationDate.setDate(expirationDate.getDate() + 30); // 30 days for paid plans
   }
