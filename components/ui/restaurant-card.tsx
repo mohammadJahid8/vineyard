@@ -71,7 +71,7 @@ export function RestaurantCard({
             }`}
           >
             {isInTrip ? (
-              <X className='h-4 w-4' />
+              <X className='h-4 w-4 text-white' />
             ) : (
               <Plus className='h-4 w-4' />
             )}
@@ -87,7 +87,7 @@ export function RestaurantCard({
 
       <CardHeader className='pb-3'>
         <div className='flex justify-between items-start gap-2'>
-          <h3 className='font-semibold text-gray-900 leading-tight line-clamp-2'>
+          <h3 className='md:text-xl font-semibold text-gray-900 leading-tight line-clamp-2'>
             {restaurant.restaurants}
           </h3>
         </div>

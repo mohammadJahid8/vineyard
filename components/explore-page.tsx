@@ -203,7 +203,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
       <NavigationWarning />
       {/* Filters */}
       <div className='container mx-auto px-4 mt-6'>
-        <h2 className='text-xl md:text-2xl font-bold text-gray-900 mb-4'>
+        <h2 className='text-xl md:text-2xl  font-semibold md:font-bold text-gray-900 mb-4'>
           Explore
         </h2>
         <VineyardFilters onFiltersChange={handleFiltersChange} />
@@ -211,7 +211,7 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
         {/* Selected Vineyards Display */}
         {trip.vineyards.length > 0 && (
           <div className='mt-10'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-4'>
+            <h2 className='text-xl md:text-2xl  font-semibold md:font-bold text-gray-900 mb-4'>
               Selected Vineyards
             </h2>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -238,7 +238,9 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
       {filteredVineyards.length > 0 && (
         <div className='container mx-auto px-4 py-6' id='vineyards'>
           <div className='mb-4'>
-            <h2 className='text-2xl font-bold text-gray-900'>Vineyards</h2>
+            <h2 className='text-2xl  font-semibold md:font-bold text-gray-900'>
+              Vineyards
+            </h2>
             <p className='text-gray-600 mt-1'>
               {filteredVineyards.length} found
             </p>

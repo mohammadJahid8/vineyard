@@ -36,6 +36,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -151,8 +152,8 @@ function SortableLocationItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
-        isDragging ? 'shadow-lg border-gray-300' : ''
+      className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer touch-manipulation ${
+        isDragging ? 'shadow-lg border-gray-300 opacity-80' : ''
       }`}
       onMouseEnter={() => onHighlightMarker?.(location.id)}
       onClick={() => onShowInfoWindow?.(location.id)}
@@ -163,117 +164,115 @@ function SortableLocationItem({
           <div
             {...attributes}
             {...listeners}
-            className='cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded'
+            className='cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 rounded touch-manipulation select-none'
             onClick={(e) => e.stopPropagation()}
+            style={{
+              touchAction: 'none',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <GripVertical className='h-4 w-4 text-gray-400' />
+            <GripVertical className='h-5 w-5 text-gray-400' />
           </div>
 
-          {/* Simple black rounded icon */}
-          {/* <div className='rounded-full flex items-center justify-center flex-shrink-0 mt-1'>
-            <Circle
-              className={cn(
-                'h-4 w-4',
-                location.type === 'vineyard'
-                  ? 'text-black fill-black'
-                  : 'text-orange-500 fill-orange-500'
-              )}
-            />
-          </div> */}
-
           <div className='flex-1 min-w-0'>
-            <div className='flex items-center justify-between'>
-              <div className='flex-1 min-w-0'>
-                <h3 className='font-medium text-gray-900 truncate text-base'>
+            <div className=''>
+              <div className='flex justify-between'>
+                <h3 className='md:text-xl font-medium text-gray-900 truncate text-base'>
                   {location.name}
                 </h3>
-              </div>
-
-              <div className='flex items-center gap-1 ml-2'>
-                {location.time && !isEditingTime && (
-                  <div className='flex items-center text-xs text-gray-500 mt-1'>
-                    <Clock className='h-3 w-3 mr-1' />
-                    <span>{formatTime12h(location.time)}</span>
-                  </div>
-                )}
-                {isEditingTime ? (
-                  <>
-                    <Input
-                      type='time'
-                      value={tempTime}
-                      onChange={(e) => setTempTime(e.target.value)}
-                      className='h-7 text-xs w-28'
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTimeSubmit();
-                      }}
-                      className='h-7 w-7 text-green-600 hover:bg-green-50 hover:text-green-700'
-                    >
-                      <Check className='h-4 w-4' />
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTimeCancel();
-                      }}
-                      className='h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700'
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    {location.time ? (
+                <div className='flex items-center gap-1 ml-2'>
+                  {location.time && !isEditingTime && (
+                    <div className='flex items-center text-xs text-black mt-1'>
+                      <Clock className='h-3 w-3 mr-1' />
+                      <span>{formatTime12h(location.time)}</span>
+                    </div>
+                  )}
+                  {isEditingTime ? (
+                    <>
+                      <Input
+                        type='time'
+                        value={tempTime}
+                        onChange={(e) => setTempTime(e.target.value)}
+                        className='h-7 text-xs w-28'
+                        onClick={(e) => e.stopPropagation()}
+                      />
                       <Button
                         variant='ghost'
                         size='icon'
                         onClick={(e) => {
                           e.stopPropagation();
-                          setIsEditingTime(true);
+                          handleTimeSubmit();
                         }}
-                        className='h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                        className='h-7 w-7 text-green-600 hover:bg-green-50 hover:text-green-700'
                       >
-                        <PencilLine className='h-4 w-4' />
+                        <Check className='h-4 w-4' />
                       </Button>
-                    ) : (
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsEditingTime(true);
-                        }}
-                        className='h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50'
-                      >
-                        {location.time ? 'Edit Time' : 'Add Time'}
-                      </Button>
-                    )}
-                    {onRemove && (
                       <Button
                         variant='ghost'
                         size='icon'
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRemove(location.id);
+                          handleTimeCancel();
                         }}
-                        className='h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50'
-                        title='Remove item'
+                        className='h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700'
                       >
                         <X className='h-4 w-4' />
                       </Button>
-                    )}
-                  </>
-                )}
+                    </>
+                  ) : (
+                    <>
+                      {location.time ? (
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingTime(true);
+                          }}
+                          className='h-7 w-7 text-black hover:text-blue-600 hover:bg-blue-50'
+                        >
+                          <PencilLine className='h-4 w-4' />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingTime(true);
+                          }}
+                          className='h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                        >
+                          {location.time ? 'Edit Time' : 'Add Time'}
+                        </Button>
+                      )}
+                      {onRemove && (
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove(location.id);
+                          }}
+                          className='h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50'
+                          title='Remove item'
+                        >
+                          <X className='h-4 w-4' />
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-
+            <span className='text-black text-xs'>
+              {location.data.sub_region}
+              {location.data.type && `, ${location.data.type}`}
+            </span>
             {isVineyard && location.offer && (
               <div className='mt-2 text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 inline-block'>
                 {location.offer.title} • €{location.offer.cost_per_adult}/person
@@ -292,7 +291,7 @@ function SortableLocationItem({
                 e.stopPropagation();
                 onToggleCollapse(location.id);
               }}
-              className='h-6 p-0 text-xs text-gray-600 hover:text-gray-800 flex items-center gap-1'
+              className='h-6 p-0 text-xs text-black hover:text-gray-800 flex items-center gap-1'
             >
               {isCollapsed ? (
                 <>
@@ -325,115 +324,111 @@ function SortableLocationItem({
             <CollapsibleContent className='mt-3'>
               <div className='space-y-3 text-xs bg-gray-50 rounded-lg p-3'>
                 {/* Location & Rating */}
-                <div className='grid grid-cols-1 gap-2'>
-                  {location.data.sub_region && (
-                    <div className='flex items-start gap-2'>
-                      <MapIcon className='h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0' />
-                      <span className='text-gray-600'>
-                        {location.data.sub_region}
-                      </span>
-                    </div>
-                  )}
 
-                  {location.data.g_rating && (
-                    <div className='flex items-center gap-2'>
-                      <Star className='h-3 w-3 text-yellow-500 flex-shrink-0' />
-                      <span className='text-gray-700 font-medium'>
-                        {location.data.g_rating}
+                {location.data.g_rating && (
+                  <div className='flex items-center gap-2'>
+                    <Star className='h-3 w-3 text-yellow-500 flex-shrink-0' />
+                    <span className='text-gray-700 font-medium'>
+                      {location.data.g_rating}
+                    </span>
+                    {location.data.g_ratig_user && (
+                      <span className='text-black'>
+                        (
+                        {location.data.g_ratig_user.split(' / ')[1] ||
+                          location.data.g_ratig_user}{' '}
+                        reviews)
                       </span>
-                      {location.data.g_ratig_user && (
-                        <span className='text-gray-500'>
-                          (
-                          {location.data.g_ratig_user.split(' / ')[1] ||
-                            location.data.g_ratig_user}{' '}
-                          reviews)
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Vineyard-specific details */}
                 {isVineyard && (
                   <>
                     {/* Experience Types */}
-                    <div className='border-t border-gray-200 pt-2'>
-                      <div className='text-gray-500 font-medium mb-1'>
+                    <div className=''>
+                      <div className='text-black text-sm font-medium mb-2'>
                         Available Experiences:
                       </div>
-                      <div className='flex flex-wrap gap-1'>
-                        {location.data.tasting_only && (
-                          <span className='bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs'>
-                            Tasting
-                          </span>
-                        )}
-                        {location.data.tour_and_tasting && (
-                          <span className='bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs'>
-                            Tour & Tasting
-                          </span>
-                        )}
-                        {location.data.pairing_and_lunch && (
-                          <span className='bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs'>
-                            Pairing & Lunch
-                          </span>
-                        )}
-                        {location.data.vine_experience && (
-                          <span className='bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs'>
-                            Vine Experience
-                          </span>
-                        )}
-                        {location.data.masterclass_workshop && (
-                          <span className='bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs'>
-                            Masterclass
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Cost Range */}
-                    {(location.data.lowest_cost_per_adult ||
-                      location.data.highest_cost_per_adult) && (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-gray-600'>
+                      {/* Cost Range */}
+                      {(location.data.lowest_cost_per_adult ||
+                        location.data.highest_cost_per_adult) && (
+                        <span className='text-black'>
                           €{location.data.lowest_cost_per_adult}
                           {location.data.lowest_cost_per_adult !==
                             location.data.highest_cost_per_adult &&
                             ` - €${location.data.highest_cost_per_adult}`}{' '}
-                          per person
+                          pp
                         </span>
-                      </div>
-                    )}
-
-                    {/* Prestige & Type */}
-                    <div className='flex items-center justify-between'>
-                      {location.data.type && (
-                        <div className='flex items-center gap-2'>
-                          <div className='w-3 h-3 bg-purple-500 rounded-full flex-shrink-0'></div>
-                          <span className='text-gray-600'>
-                            {location.data.type}
-                          </span>
-                        </div>
                       )}
-                      {location.data.prestige === 1 && (
-                        <span className='bg-gold-100 text-gold-700 px-2 py-0.5 rounded text-xs font-medium'>
-                          ⭐ Prestige
-                        </span>
+                      <div className='flex flex-wrap gap-1 mt-2'>
+                        {location.data.tasting_only && (
+                          <span className='bg-gray-100 px-2 py-0.5 rounded text-xs'>
+                            Tasting
+                          </span>
+                        )}
+                        {location.data.tour_and_tasting && (
+                          <span className='bg-gray-100 px-2 py-0.5 rounded text-xs'>
+                            Tour & Tasting
+                          </span>
+                        )}
+                        {location.data.pairing_and_lunch && (
+                          <span className='bg-gray-100 px-2 py-0.5 rounded text-xs'>
+                            Pairing & Lunch
+                          </span>
+                        )}
+                        {location.data.vine_experience && (
+                          <span className='bg-gray-100 px-2 py-0.5 rounded text-xs'>
+                            Vine Experience
+                          </span>
+                        )}
+                        {location.data.masterclass_workshop && (
+                          <span className='bg-gray-100 px-2 py-0.5 rounded text-xs'>
+                            Masterclass
+                          </span>
+                        )}
+                      </div>
+
+                      {(location.data.qr || location.data.top) && (
+                        <div className='pt-2'>
+                          <div className='text-black font-medium mb-1'>
+                            Wine Ratings:
+                          </div>
+                          <div className='flex gap-4'>
+                            {location.data.qr && (
+                              <div className='flex items-center gap-1'>
+                                <span className='text-black'>
+                                  Quality: {location.data.qr}
+                                </span>
+                              </div>
+                            )}
+                            {location.data.top && (
+                              <div className='flex items-center gap-1'>
+                                <span className='text-black'>
+                                  Top: {location.data.top}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     {/* Key Reasons (Top 3) */}
                     {(location.data.reason_1 ||
                       location.data.reason_2 ||
-                      location.data.reason_3) && (
+                      location.data.reason_3 ||
+                      location.data.reason_4 ||
+                      location.data.reason_5) && (
                       <div className='border-t border-gray-200 pt-2'>
-                        <div className='text-gray-500 font-medium mb-1'>
+                        <div className='text-black font-medium mb-1'>
                           Why Visit:
                         </div>
                         <div className='space-y-1'>
                           {location.data.reason_1 && (
                             <div className='flex items-start gap-2'>
                               <span className='text-green-500 text-xs'>•</span>
-                              <span className='text-gray-600 text-xs leading-tight'>
+                              <span className='text-black text-xs leading-tight'>
                                 {location.data.reason_1}
                               </span>
                             </div>
@@ -441,7 +436,7 @@ function SortableLocationItem({
                           {location.data.reason_2 && (
                             <div className='flex items-start gap-2'>
                               <span className='text-green-500 text-xs'>•</span>
-                              <span className='text-gray-600 text-xs leading-tight'>
+                              <span className='text-black text-xs leading-tight'>
                                 {location.data.reason_2}
                               </span>
                             </div>
@@ -449,35 +444,24 @@ function SortableLocationItem({
                           {location.data.reason_3 && (
                             <div className='flex items-start gap-2'>
                               <span className='text-green-500 text-xs'>•</span>
-                              <span className='text-gray-600 text-xs leading-tight'>
+                              <span className='text-black text-xs leading-tight'>
                                 {location.data.reason_3}
                               </span>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Wine Quality Ratings */}
-                    {(location.data.qr || location.data.top) && (
-                      <div className='border-t border-gray-200 pt-2'>
-                        <div className='text-gray-500 font-medium mb-1'>
-                          Wine Ratings:
-                        </div>
-                        <div className='flex gap-4'>
-                          {location.data.qr && (
-                            <div className='flex items-center gap-1'>
-                              <span className='text-purple-500'>🍷</span>
-                              <span className='text-gray-600'>
-                                Quality: {location.data.qr}
+                          {location.data.reason_4 && (
+                            <div className='flex items-start gap-2'>
+                              <span className='text-green-500 text-xs'>•</span>
+                              <span className='text-black text-xs leading-tight'>
+                                {location.data.reason_4}
                               </span>
                             </div>
                           )}
-                          {location.data.top && (
-                            <div className='flex items-center gap-1'>
-                              <span className='text-gold-500'>👑</span>
-                              <span className='text-gray-600'>
-                                Top: {location.data.top}
+                          {location.data.reason_5 && (
+                            <div className='flex items-start gap-2'>
+                              <span className='text-green-500 text-xs'>•</span>
+                              <span className='text-black text-xs leading-tight'>
+                                {location.data.reason_5}
                               </span>
                             </div>
                           )}
@@ -491,8 +475,8 @@ function SortableLocationItem({
                       location.data.saturday_low ||
                       location.data.sunday_low) && (
                       <div className='flex items-center gap-2'>
-                        <Clock className='h-3 w-3 text-gray-500 flex-shrink-0' />
-                        <span className='text-gray-600'>
+                        <Clock className='h-3 w-3 text-black flex-shrink-0' />
+                        <span className='text-black'>
                           Weekend availability:
                           {(location.data.saturday_high ||
                             location.data.saturday_low) &&
@@ -510,11 +494,10 @@ function SortableLocationItem({
                 {!isVineyard && (
                   <>
                     {/* Cuisine & Cost */}
-                    <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
                       {location.data.actual_type && (
                         <div className='flex items-center gap-2'>
-                          <div className='w-3 h-3 bg-orange-500 rounded-full flex-shrink-0'></div>
-                          <span className='text-gray-600'>
+                          <span className='text-black'>
                             {location.data.actual_type}
                           </span>
                         </div>
@@ -528,8 +511,7 @@ function SortableLocationItem({
 
                     {location.data.avg_est_lunch_cost && (
                       <div className='flex items-center gap-2'>
-                        <span className='text-gray-500'>💰</span>
-                        <span className='text-gray-600'>
+                        <span className='text-black'>
                           Avg. Lunch Cost: €{location.data.avg_est_lunch_cost}
                         </span>
                       </div>
@@ -538,8 +520,8 @@ function SortableLocationItem({
                     {/* Opening Days */}
                     {location.data.open_days && (
                       <div className='flex items-center gap-2'>
-                        <Clock className='h-3 w-3 text-gray-500 flex-shrink-0' />
-                        <span className='text-gray-600'>
+                        <Clock className='h-3 w-3 text-black flex-shrink-0' />
+                        <span className='text-black'>
                           Open: {location.data.open_days}
                         </span>
                       </div>
@@ -548,8 +530,7 @@ function SortableLocationItem({
                     {/* TripAdvisor Rating */}
                     {location.data.ta_rating && (
                       <div className='flex items-center gap-2'>
-                        <div className='w-3 h-3 bg-green-500 rounded-full flex-shrink-0'></div>
-                        <span className='text-gray-600'>
+                        <span className='text-black'>
                           TripAdvisor: {location.data.ta_rating}
                         </span>
                       </div>
@@ -558,7 +539,7 @@ function SortableLocationItem({
                 )}
 
                 {/* External Links */}
-                <div className='border-t border-gray-200 pt-2 flex gap-2'>
+                {/* <div className='border-t border-gray-200 pt-2 flex gap-2'>
                   {(location.data.maplink || location.data.gkp_link) && (
                     <a
                       href={location.data.maplink || location.data.gkp_link}
@@ -569,7 +550,7 @@ function SortableLocationItem({
                       See more
                     </a>
                   )}
-                </div>
+                </div> */}
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -605,7 +586,17 @@ export default function MapViewPage() {
 
   // DnD sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -1451,7 +1442,7 @@ export default function MapViewPage() {
             <h2 className='text-xl font-semibold text-gray-900 mb-2'>
               Loading Map
             </h2>
-            <p className='text-gray-600'>Preparing your route...</p>
+            <p className='text-black'>Preparing your route...</p>
           </div>
         </div>
       </VineyardTourLayout>
@@ -1471,7 +1462,7 @@ export default function MapViewPage() {
             <h2 className='text-xl font-semibold text-gray-900 mb-2'>
               Unable to Load Map
             </h2>
-            <p className='text-gray-600 mb-6'>{error}</p>
+            <p className='text-black mb-6'>{error}</p>
             <div className='space-x-3'>
               <Button
                 onClick={() => router.push('/explore/trip')}
@@ -1504,7 +1495,7 @@ export default function MapViewPage() {
           <h2 className='text-2xl font-bold text-gray-900 mb-2'>
             No locations to show
           </h2>
-          <p className='text-gray-600 mb-6'>
+          <p className='text-black mb-6'>
             Your plan doesn't have any confirmed locations to display on the map
           </p>
           <Button
@@ -1535,7 +1526,7 @@ export default function MapViewPage() {
             <div className='absolute inset-0 bg-gray-100 flex items-center justify-center'>
               <div className='text-center'>
                 <Navigation className='h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin' />
-                <p className='text-gray-600'>Loading your route...</p>
+                <p className='text-black'>Loading your route...</p>
               </div>
             </div>
           )}
@@ -1545,7 +1536,9 @@ export default function MapViewPage() {
         <div className='w-full lg:w-96 bg-gray-50 border-t lg:border-t-0 lg:border-l border-gray-200 overflow-y-auto order-2 max-h-[40vh] lg:max-h-[calc(100vh-119px)]'>
           <div className='p-4 lg:p-6'>
             <div className='flex items-center justify-between mb-4'>
-              <h2 className='text-lg font-semibold text-gray-900'>Your Plan</h2>
+              <h2 className='text-lg md:text-xl font-semibold text-gray-900'>
+                Your Plan
+              </h2>
             </div>
 
             {/* Add vineyard button */}
@@ -1623,11 +1616,11 @@ export default function MapViewPage() {
               )}
               <div className='space-y-2 mb-4'>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600'>Total Stops:</span>
+                  <span className='text-black'>Total Stops:</span>
                   <span className='font-medium'>{sortedLocations.length}</span>
                 </div>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600'>Vineyards:</span>
+                  <span className='text-black'>Vineyards:</span>
                   <span className='font-medium'>
                     {
                       sortedLocations.filter((item) => item.type === 'vineyard')
@@ -1636,7 +1629,7 @@ export default function MapViewPage() {
                   </span>
                 </div>
                 <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600'>Restaurants:</span>
+                  <span className='text-black'>Restaurants:</span>
                   <span className='font-medium'>
                     {
                       sortedLocations.filter(
@@ -1649,9 +1642,9 @@ export default function MapViewPage() {
 
               {/* Subscription Timer */}
               <div className='bg-white border border-gray-200 rounded-lg p-3 text-center'>
-                <div className='text-xs text-gray-500 mb-1'>Subscription</div>
+                <div className='text-xs text-black mb-1'>Subscription</div>
                 <div className='flex items-center justify-center gap-2'>
-                  <Clock className='h-4 w-4 text-gray-500' />
+                  <Clock className='h-4 w-4 text-black' />
                   <span
                     className={`text-sm font-medium ${
                       subscription.isAdmin

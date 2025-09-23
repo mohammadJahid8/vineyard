@@ -85,7 +85,7 @@ export default function PlansPage() {
         {/* Hero Section */}
         <div className='text-center mb-12'>
           <h2 className='text-3xl md:text-5xl font-bold text-gray-900 mb-4'>
-            Choose Your Plan
+            Choose a plan
           </h2>
 
           <p className='md:text-lg text-gray-500 max-w-2xl mx-auto'>

@@ -98,7 +98,7 @@ export function VineyardCard({
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
-            <h3 className='text-xl font-bold text-gray-900 mb-1'>
+            <h3 className='md:text-xl font-bold text-gray-900 mb-1'>
               {vineyard.vineyard}
             </h3>
             <div className='flex items-center text-sm text-gray-600 mb-2'>
