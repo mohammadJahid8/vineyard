@@ -5,6 +5,7 @@ import { createSuccessResponse, createErrorResponse, handleApiError } from '@/li
 
 export async function GET(request: NextRequest) {
   try {
+    
     await connectDB();
 
     const { searchParams } = new URL(request.url);
@@ -15,15 +16,17 @@ export async function GET(request: NextRequest) {
     const minRating = searchParams.get('minRating');
     const search = searchParams.get('search');
 
+    console.log({region, type, minCost, maxCost, minRating, search})
     // Build query object
     const query: any = {};
 
     if (region && region !== 'all') {
-      query.region = region;
+      query.sub_region = { $regex: region, $options: 'i' };
     }
 
     if (type && type !== 'all') {
-      query.actual_type = type;
+      // query.actual_type = type;
+      query.approx_google_type = { $regex: type, $options: 'i' };
     }
 
     if (minCost || maxCost) {
@@ -49,8 +52,9 @@ export async function GET(request: NextRequest) {
         { approx_google_type: { $regex: search, $options: 'i' } },
       ];
     }
+    console.log({query})
 
-    const restaurants = await Restaurant.find(query).sort({ g_rating: -1 });
+    const restaurants = await Restaurant.find(query).sort({ g_rating: -1 }).limit(5);
 
     return createSuccessResponse(restaurants, 'Restaurants fetched successfully');
   } catch (error) {

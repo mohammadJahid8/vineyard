@@ -13,12 +13,15 @@ export async function GET(request: NextRequest) {
     const minCost = searchParams.get('minCost');
     const maxCost = searchParams.get('maxCost');
     const search = searchParams.get('search');
-
+    const experience = searchParams.get('experience');
+    
+    console.log({region, type, minCost, maxCost, search, experience})
+    
     // Build query object
     const query: any = {};
 
     if (region && region !== 'all') {
-      query.region = region;
+      query.sub_region = { $regex: region, $options: 'i' };
     }
 
     if (type && type !== 'all') {
@@ -35,16 +38,51 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (experience) {
+      const experiences = experience.split(',');
+      const experienceConditions = experiences.map(exp => {
+        switch (exp.trim()) {
+          case 'tasting_only':
+            return { tasting_only: true };
+          case 'tour_and_tasting':
+            return { tour_and_tasting: true };
+          case 'pairing_and_lunch':
+            return { pairing_and_lunch: true };
+          case 'vine_experience':
+            return { vine_experience: true };
+          case 'masterclass_workshop':
+            return { masterclass_workshop: true };
+          default:
+            return null;
+        }
+      }).filter(Boolean);
+      
+      if (experienceConditions.length > 0) {
+        query.$or = experienceConditions;
+      }
+    }
+
     if (search) {
-      query.$or = [
+      const searchConditions = [
         { vineyard: { $regex: search, $options: 'i' } },
         { region: { $regex: search, $options: 'i' } },
         { sub_region: { $regex: search, $options: 'i' } },
       ];
+      
+      if (query.$or) {
+        // Combine experience and search conditions
+        query.$and = [
+          { $or: query.$or },
+          { $or: searchConditions }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
-    const vineyards = await Vineyard.find(query).sort({ vineyard: 1 });
-    console.log('🚀 ~ GET ~ vineyards:')
+    console.log('🚀 ~ GET ~ vineyards query:', JSON.stringify(query, null, 2))
+    const vineyards = await Vineyard.find(query).sort({ g: -1 }).limit(10);
 
     return createSuccessResponse(vineyards, 'Vineyards fetched successfully');
   } catch (error) {

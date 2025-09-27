@@ -37,11 +37,6 @@ const costOptions = [
   { value: '70+', label: '€70+' },
 ];
 
-const distanceOptions = [
-  { value: 'under-2', label: 'Under 2km' },
-  { value: '2-30', label: 'Up to 30km' },
-];
-
 const locationOptions = [
   { value: 'reims city', label: 'Reims City' },
   { value: 'reims mountain', label: 'Reims Mountain' },
@@ -50,12 +45,6 @@ const locationOptions = [
   { value: 'marne valley', label: 'Marne Valley' },
   { value: 'côte des blancs', label: 'Côte des Blancs' },
   { value: 'further south', label: 'Further South' },
-];
-
-const startingPointOptions = [
-  { value: 'all', label: 'All Starting Points' },
-  { value: 'client', label: 'Client Enters' },
-  { value: 'vineyard', label: 'Vineyard Selected' },
 ];
 
 export function RestaurantFilters({
@@ -73,8 +62,8 @@ export function RestaurantFilters({
       cost: searchParams.get('cost') || '',
       rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
-      distance: searchParams.get('distance') || '',
-      startingPoint: searchParams.get('startingPoint') || 'all',
+      distance: '',
+      startingPoint: 'all',
     };
   };
 
@@ -101,7 +90,6 @@ export function RestaurantFilters({
     if (newFilters.type !== '') params.set('type', newFilters.type);
     if (newFilters.cost !== '') params.set('cost', newFilters.cost);
     if (newFilters.rating !== 'all') params.set('rating', newFilters.rating);
-    if (newFilters.distance !== '') params.set('distance', newFilters.distance);
     if (newFilters.search) params.set('search', newFilters.search);
 
     const paramString = params.toString();
@@ -142,6 +130,10 @@ export function RestaurantFilters({
     setAppliedFilters(finalFilters);
     updateURL(finalFilters);
     onFiltersChange(finalFilters);
+    window.scrollTo({
+      top: document.getElementById('restaurants')?.offsetTop,
+      behavior: 'smooth',
+    });
   }, [
     tempFilters,
     searchInput,
@@ -197,8 +189,6 @@ export function RestaurantFilters({
     (appliedFilters.type && appliedFilters.type !== '') ||
     (appliedFilters.cost && appliedFilters.cost !== '') ||
     (appliedFilters.rating && appliedFilters.rating !== 'all') ||
-    (appliedFilters.distance && appliedFilters.distance !== '') ||
-    (appliedFilters.startingPoint && appliedFilters.startingPoint !== 'all') ||
     (appliedFilters.search && appliedFilters.search !== '');
 
   const hasUnappliedChanges = useMemo(
@@ -207,8 +197,6 @@ export function RestaurantFilters({
       tempFilters.type !== appliedFilters.type ||
       tempFilters.cost !== appliedFilters.cost ||
       tempFilters.rating !== appliedFilters.rating ||
-      tempFilters.distance !== appliedFilters.distance ||
-      tempFilters.startingPoint !== appliedFilters.startingPoint ||
       searchInput !== appliedFilters.search,
     [tempFilters, appliedFilters, searchInput]
   );
@@ -221,7 +209,7 @@ export function RestaurantFilters({
           {/* Location Filter */}
           <div className='md:col-span-3'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Area
+              Area <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.area}
@@ -243,7 +231,7 @@ export function RestaurantFilters({
           {/* Type Filter */}
           <div className='md:col-span-3'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Type
+              Type <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.type}
@@ -265,7 +253,7 @@ export function RestaurantFilters({
           {/* Cost Filter */}
           <div className='md:col-span-3'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Cost
+              Cost <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.cost}
@@ -422,32 +410,6 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.distance && appliedFilters.distance !== '' && (
-              <Badge
-                variant='secondary'
-                className='bg-vineyard-100 text-vineyard-800'
-              >
-                Distance:{' '}
-                {
-                  distanceOptions.find(
-                    (opt) => opt.value === appliedFilters.distance
-                  )?.label
-                }
-                <X
-                  className='ml-1 h-3 w-3 cursor-pointer'
-                  onClick={() => {
-                    const clearedFilters = {
-                      ...appliedFilters,
-                      distance: '',
-                    };
-                    setAppliedFilters(clearedFilters);
-                    setTempFilters(clearedFilters);
-                    updateURL(clearedFilters);
-                    onFiltersChange(clearedFilters);
-                  }}
-                />
-              </Badge>
-            )}
             {appliedFilters.search && appliedFilters.search !== '' && (
               <Badge
                 variant='secondary'
@@ -485,9 +447,7 @@ export function RestaurantFilters({
       updateTempFilters,
       typeOptions,
       costOptions,
-      distanceOptions,
       locationOptions,
-      startingPointOptions,
     ]
   );
 
@@ -508,10 +468,7 @@ export function RestaurantFilters({
                 appliedFilters.area !== '' ? appliedFilters.area : null,
                 appliedFilters.type !== '' ? appliedFilters.type : null,
                 appliedFilters.cost !== '' ? appliedFilters.cost : null,
-                appliedFilters.distance !== '' ? appliedFilters.distance : null,
-                appliedFilters.startingPoint !== 'all'
-                  ? appliedFilters.startingPoint
-                  : null,
+                appliedFilters.rating !== 'all' ? appliedFilters.rating : null,
                 appliedFilters.search !== '' ? appliedFilters.search : null,
               ].filter(Boolean).length
             })`}

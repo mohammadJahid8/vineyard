@@ -15,31 +15,118 @@ import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 12;
 
-interface LunchPageProps {
-  restaurants: Restaurant[];
-}
-
-export default function LunchPage({ restaurants }: LunchPageProps) {
+export default function LunchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentPage = parseInt(searchParams.get('page') || '1');
   const { trip, addRestaurant, removeRestaurant } = useTrip();
+
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<RestaurantFilterState>({
-    area: 'all',
-    type: 'all',
-    cost: 'all',
+    area: '',
+    type: '',
+    cost: '',
     rating: 'all',
     search: '',
-    distance: 'all',
+    distance: '',
     startingPoint: 'all',
   });
+
+  // Function to fetch restaurants from API with filters
+  const fetchRestaurants = useCallback(
+    async (filterParams: RestaurantFilterState) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+
+        // Map frontend filter names to API parameter names
+        if (filterParams.area && filterParams.area !== '') {
+          params.set('region', filterParams.area);
+        }
+        if (filterParams.type && filterParams.type !== '') {
+          params.set('type', filterParams.type);
+        }
+        if (filterParams.search && filterParams.search !== '') {
+          params.set('search', filterParams.search);
+        }
+        if (filterParams.rating && filterParams.rating !== 'all') {
+          // Convert rating filter to minRating
+          switch (filterParams.rating) {
+            case '4-plus':
+              params.set('minRating', '4.0');
+              break;
+            case '4.5-plus':
+              params.set('minRating', '4.5');
+              break;
+            case '3.5-plus':
+              params.set('minRating', '3.5');
+              break;
+          }
+        }
+        if (filterParams.cost && filterParams.cost !== '') {
+          // Convert cost filter to minCost/maxCost
+          switch (filterParams.cost) {
+            case 'under-25':
+              params.set('maxCost', '25');
+              break;
+            case '25-40':
+              params.set('minCost', '25');
+              params.set('maxCost', '40');
+              break;
+            case '40-70':
+              params.set('minCost', '40');
+              params.set('maxCost', '70');
+              break;
+            case '70+':
+              params.set('minCost', '70');
+              break;
+          }
+        }
+
+        const response = await fetch(`/api/restaurants?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurants');
+        }
+
+        const result = await response.json();
+        setRestaurants(result.data || []);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        setRestaurants([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // Initialize filters from URL on component mount
+  useEffect(() => {
+    const urlFilters: RestaurantFilterState = {
+      area: searchParams.get('area') || '',
+      type: searchParams.get('type') || '',
+      cost: searchParams.get('cost') || '',
+      rating: searchParams.get('rating') || 'all',
+      search: searchParams.get('search') || '',
+      distance: '',
+      startingPoint: 'all',
+    };
+    setFilters(urlFilters);
+
+    // Only fetch if we have required filters
+    if (urlFilters.area && urlFilters.type && urlFilters.cost) {
+      fetchRestaurants(urlFilters);
+    }
+  }, [searchParams, fetchRestaurants]);
 
   // Handle filter changes from RestaurantFilters component
   const handleFiltersChange = useCallback(
     (newFilters: RestaurantFilterState) => {
       setFilters(newFilters);
+      fetchRestaurants(newFilters);
     },
-    []
+    [fetchRestaurants]
   );
 
   // Check if user has selected all required filters
@@ -47,128 +134,8 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
     return filters.area !== '' && filters.type !== '' && filters.cost !== '';
   }, [filters]);
 
-  // Get missing filter names
-  const getMissingFilters = useMemo(() => {
-    const missing = [];
-    if (filters.area === '') missing.push('Area');
-    if (filters.type === '') missing.push('Type');
-    if (filters.cost === '') missing.push('Cost');
-    return missing;
-  }, [filters]);
-
-  // Filter restaurants
-  const filteredRestaurants = useMemo(() => {
-    // Don't show any restaurants if all required filters are not selected
-    if (!hasAllRequiredFilters) {
-      return [];
-    }
-
-    return restaurants
-      .filter((restaurant) => {
-        // Search filter
-        if (filters.search) {
-          const searchTerm = filters.search.toLowerCase();
-          const restaurantName = restaurant.restaurants?.toLowerCase() || '';
-          const subRegion = restaurant.sub_region?.toLowerCase() || '';
-          const type =
-            restaurant.actual_type?.toLowerCase() ||
-            restaurant.approx_google_type?.toLowerCase() ||
-            '';
-
-          if (
-            !restaurantName.includes(searchTerm) &&
-            !subRegion.includes(searchTerm) &&
-            !type.includes(searchTerm)
-          ) {
-            return false;
-          }
-        }
-
-        // Area filter - use partial matching on sub_region
-        if (filters.area && filters.area !== '') {
-          const subRegion = restaurant.sub_region?.toLowerCase() || '';
-          const filterArea = filters.area.toLowerCase();
-          if (!subRegion.includes(filterArea)) {
-            return false;
-          }
-        }
-
-        // Type filter
-        if (
-          filters.type &&
-          filters.type !== '' &&
-          (restaurant.actual_type || '') !== filters.type
-        ) {
-          return false;
-        }
-
-        // Cost filter
-        if (filters.cost && filters.cost !== '') {
-          const cost = restaurant.avg_est_lunch_cost;
-          if (cost == null || cost === undefined) return false;
-
-          switch (filters.cost) {
-            case 'under-25':
-              if (cost >= 25) return false;
-              break;
-            case '25-40':
-              if (cost < 25 || cost > 40) return false;
-              break;
-            case '40-70':
-              if (cost < 40 || cost > 70) return false;
-              break;
-            case '70+':
-              if (cost < 70) return false;
-              break;
-          }
-        }
-
-        // Rating filter (removed since not in the new design)
-        if (filters.rating && filters.rating !== 'all') {
-          const rating = restaurant.g_rating;
-          if (rating == null || rating === undefined) return false;
-
-          switch (filters.rating) {
-            case '4-plus':
-              if (rating < 4.0) return false;
-              break;
-            case '4.5-plus':
-              if (rating < 4.5) return false;
-              break;
-            case '3.5-plus':
-              if (rating < 3.5) return false;
-              break;
-          }
-        }
-
-        // Distance filter (placeholder logic - would need actual distance calculation)
-        if (filters.distance && filters.distance !== 'all') {
-          // This would require implementing actual distance calculation
-          // For now, we'll just pass through all restaurants
-        }
-
-        // Starting Point filter (placeholder logic)
-        if (filters.startingPoint && filters.startingPoint !== 'all') {
-          // This would require context of the user's current location or vineyard selection
-          // For now, we'll just pass through all restaurants
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        // Sort by Google rating (higher first)
-        const ratingA =
-          typeof a.g_rating === 'string'
-            ? parseFloat(a.g_rating)
-            : a.g_rating || 0;
-        const ratingB =
-          typeof b.g_rating === 'string'
-            ? parseFloat(b.g_rating)
-            : b.g_rating || 0;
-        return ratingB - ratingA;
-      })
-      .slice(0, 5); // Limit to top 5 restaurants
-  }, [restaurants, filters]);
+  // Use restaurants directly from API (already filtered on server)
+  const filteredRestaurants = hasAllRequiredFilters ? restaurants : [];
 
   // Pagination
   const totalPages = Math.ceil(filteredRestaurants.length / ITEMS_PER_PAGE);
@@ -233,7 +200,10 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
       {/* Results Header */}
       {/* {filteredRestaurants.length > 0 && ( */}
       <div className='container mx-auto px-4 py-6' id='restaurants'>
-        <div className='mb-4 flex justify-between items-center'>
+        <div
+          className='mb-4 flex justify-between items-center'
+          id='restaurants'
+        >
           {filteredRestaurants.length > 0 && (
             <div>
               <h2 className='text-2xl font-bold text-gray-900'>Restaurants</h2>
@@ -255,7 +225,11 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
         </div>
 
         {/* Restaurant Grid */}
-        {paginatedRestaurants.length > 0 ? (
+        {loading ? (
+          <div className='text-center py-12'>
+            <p className='text-gray-600'>Loading restaurants...</p>
+          </div>
+        ) : paginatedRestaurants.length > 0 ? (
           <>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
               {paginatedRestaurants.map((restaurant) => (
@@ -291,17 +265,19 @@ export default function LunchPage({ restaurants }: LunchPageProps) {
                 </p>
                 <Button
                   variant='outline'
-                  onClick={() =>
-                    setFilters({
+                  onClick={() => {
+                    const clearedFilters = {
                       area: '',
                       type: '',
                       cost: '',
                       rating: 'all',
                       search: '',
-                      distance: 'all',
+                      distance: '',
                       startingPoint: 'all',
-                    })
-                  }
+                    };
+                    setFilters(clearedFilters);
+                    setRestaurants([]);
+                  }}
                 >
                   Clear All Filters
                 </Button>

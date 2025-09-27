@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { VineyardFilters } from '@/components/ui/vineyard-filters';
 import { VineyardCard } from '@/components/ui/vineyard-card';
@@ -15,17 +15,16 @@ import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 12;
 
-interface ExplorePageProps {
-  vineyards: Vineyard[];
-  offers: Offer[];
-}
-
-export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
+export default function ExplorePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentPage = parseInt(searchParams.get('page') || '1');
   const { trip, addVineyard, removeVineyard, hasUnsavedChanges } = useTrip();
   const MAX_VINEYARDS = 10;
+
+  const [vineyards, setVineyards] = useState<Vineyard[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     area: '',
     type: '',
@@ -34,10 +33,109 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
     search: '',
   });
 
-  // Handle filter changes from VineyardFilters component
-  const handleFiltersChange = useCallback((newFilters: FilterState) => {
-    setFilters(newFilters);
+  // Function to fetch vineyards from API with filters
+  const fetchVineyards = useCallback(async (filterParams: FilterState) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+
+      // Map frontend filter names to API parameter names
+      if (filterParams.area && filterParams.area !== '') {
+        params.set('region', filterParams.area);
+      }
+      if (filterParams.type && filterParams.type !== '') {
+        params.set('type', filterParams.type);
+      }
+      if (filterParams.search && filterParams.search !== '') {
+        params.set('search', filterParams.search);
+      }
+      if (filterParams.experience && filterParams.experience.length > 0) {
+        params.set('experience', filterParams.experience.join(','));
+      }
+      if (filterParams.cost && filterParams.cost !== '') {
+        // Convert cost filter to minCost/maxCost
+        switch (filterParams.cost) {
+          case 'under-25':
+            params.set('maxCost', '25');
+            break;
+          case '25-40':
+            params.set('minCost', '25');
+            params.set('maxCost', '40');
+            break;
+          case '40-70':
+            params.set('minCost', '40');
+            params.set('maxCost', '70');
+            break;
+          case '70+':
+            params.set('minCost', '70');
+            break;
+        }
+      }
+
+      const response = await fetch(`/api/vineyards?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch vineyards');
+      }
+
+      const result = await response.json();
+      setVineyards(result.data || []);
+    } catch (error) {
+      console.error('Error fetching vineyards:', error);
+      setVineyards([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Function to fetch offers
+  const fetchOffers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/offers');
+      if (!response.ok) {
+        throw new Error('Failed to fetch offers');
+      }
+
+      const result = await response.json();
+      setOffers(result.data || []);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      setOffers([]);
+    }
+  }, []);
+
+  // Initialize filters from URL on component mount
+  useEffect(() => {
+    const urlFilters: FilterState = {
+      area: searchParams.get('area') || '',
+      type: searchParams.get('type') || '',
+      cost: searchParams.get('cost') || '',
+      experience: searchParams.get('experience')?.split(',') || [],
+      search: searchParams.get('search') || '',
+    };
+    setFilters(urlFilters);
+
+    // Fetch offers once on mount
+    fetchOffers();
+
+    // Only fetch vineyards if we have required filters
+    if (
+      urlFilters.area &&
+      urlFilters.type &&
+      urlFilters.cost &&
+      urlFilters.experience.length > 0
+    ) {
+      fetchVineyards(urlFilters);
+    }
+  }, [searchParams, fetchVineyards, fetchOffers]);
+
+  // Handle filter changes from VineyardFilters component
+  const handleFiltersChange = useCallback(
+    (newFilters: FilterState) => {
+      setFilters(newFilters);
+      fetchVineyards(newFilters);
+    },
+    [fetchVineyards]
+  );
 
   // Check if user has selected all required filters
   const hasAllRequiredFilters = useMemo(() => {
@@ -49,110 +147,8 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
     );
   }, [filters]);
 
-  // Get missing filter names
-  const getMissingFilters = useMemo(() => {
-    const missing = [];
-    if (filters.area === '') missing.push('Area');
-    if (filters.type === '') missing.push('Type');
-    if (filters.cost === '') missing.push('Cost');
-    if (filters.experience.length === 0) missing.push('Experience Type');
-    return missing;
-  }, [filters]);
-
-  // Filter vineyards
-  const filteredVineyards = useMemo(() => {
-    // Don't show any vineyards if all required filters are not selected
-    if (!hasAllRequiredFilters) {
-      return [];
-    }
-
-    return vineyards
-      .filter((vineyard) => {
-        // Search filter
-        if (filters.search) {
-          const searchTerm = filters.search.toLowerCase();
-          const vineyardName = vineyard.vineyard?.toLowerCase() || '';
-          const subRegion = vineyard.sub_region?.toLowerCase() || '';
-
-          if (
-            !vineyardName.includes(searchTerm) &&
-            !subRegion.includes(searchTerm)
-          ) {
-            return false;
-          }
-        }
-
-        // Area filter - use partial matching on sub_region
-        if (filters.area && filters.area !== '') {
-          const subRegion = vineyard.sub_region?.toLowerCase() || '';
-          const filterArea = filters.area.toLowerCase();
-          if (!subRegion.includes(filterArea)) {
-            return false;
-          }
-        }
-
-        // Type filter
-        if (
-          filters.type &&
-          filters.type !== '' &&
-          (vineyard.type || '') !== filters.type
-        ) {
-          return false;
-        }
-
-        // Cost filter
-        if (filters.cost && filters.cost !== '') {
-          const cost = vineyard.lowest_cost_per_adult;
-          if (cost == null || cost === undefined) return false; // Skip items without cost data
-
-          switch (filters.cost) {
-            case 'under-25':
-              if (cost >= 25) return false;
-              break;
-            case '25-40':
-              if (cost < 25 || cost > 40) return false;
-              break;
-            case '40-70':
-              if (cost < 40 || cost > 70) return false;
-              break;
-            case '70+':
-              if (cost < 70) return false;
-              break;
-          }
-        }
-
-        // Experience filter
-        if (filters.experience.length > 0) {
-          const hasMatchingExperience = filters.experience.some((exp) => {
-            switch (exp) {
-              case 'tasting_only':
-                return vineyard.tasting_only;
-              case 'tour_and_tasting':
-                return vineyard.tour_and_tasting;
-              case 'pairing_and_lunch':
-                return vineyard.pairing_and_lunch;
-              case 'vine_experience':
-                return vineyard.vine_experience;
-              case 'masterclass_workshop':
-                return vineyard.masterclass_workshop;
-              default:
-                return false;
-            }
-          });
-          if (!hasMatchingExperience) return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        // Sort by Google rating (higher first)
-        const ratingA = parseFloat(a.g?.toString() || '0') || 0;
-        const ratingB = parseFloat(b.g?.toString() || '0') || 0;
-        return ratingB - ratingA;
-      })
-      .slice(0, 10); // Limit to top 10 vineyards
-  }, [vineyards, filters]);
-  console.log({ filteredVineyards });
+  // Use vineyards directly from API (already filtered on server)
+  const filteredVineyards = hasAllRequiredFilters ? vineyards : [];
 
   // Pagination
   const totalPages = Math.ceil(filteredVineyards.length / ITEMS_PER_PAGE);
@@ -193,8 +189,6 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
     return trip.vineyards.some((v) => v.vineyard.vineyard_id === vineyardId);
   };
 
-  console.log({ trip, paginatedVineyards });
-
   const hasVineyards =
     filteredVineyards.length > 0 || trip.vineyards.length > 0;
 
@@ -215,9 +209,9 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
               Selected Vineyards
             </h2>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {trip.vineyards.map((tripVineyard) => (
+              {trip.vineyards.map((tripVineyard, index) => (
                 <VineyardCard
-                  key={tripVineyard.vineyard.vineyard_id}
+                  key={index}
                   vineyard={tripVineyard.vineyard}
                   offers={
                     tripVineyard.offer
@@ -247,7 +241,11 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
           </div>
 
           {/* Vineyard Grid */}
-          {paginatedVineyards.length > 0 ? (
+          {loading ? (
+            <div className='text-center py-12'>
+              <p className='text-gray-600'>Loading vineyards...</p>
+            </div>
+          ) : paginatedVineyards.length > 0 ? (
             <>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
                 {paginatedVineyards.map((vineyard) => (
@@ -284,15 +282,17 @@ export default function ExplorePage({ vineyards, offers }: ExplorePageProps) {
                   </p>
                   <Button
                     variant='outline'
-                    onClick={() =>
-                      setFilters({
+                    onClick={() => {
+                      const clearedFilters = {
                         area: '',
                         type: '',
                         cost: '',
                         experience: [],
                         search: '',
-                      })
-                    }
+                      };
+                      setFilters(clearedFilters);
+                      setVineyards([]);
+                    }}
                   >
                     Clear All Filters
                   </Button>

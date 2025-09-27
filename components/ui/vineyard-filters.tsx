@@ -219,7 +219,7 @@ export function VineyardFilters({
           {/* Area Filter */}
           <div className='md:col-span-2'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Area
+              Area <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.area}
@@ -241,7 +241,7 @@ export function VineyardFilters({
           {/* Type Filter */}
           <div className='md:col-span-2'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Type
+              Type <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.type}
@@ -263,7 +263,7 @@ export function VineyardFilters({
           {/* Cost Filter */}
           <div className='md:col-span-2'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Cost
+              Cost <span className='text-red-500'>*</span>
             </Label>
             <Select
               value={tempFilters.cost}
@@ -285,7 +285,7 @@ export function VineyardFilters({
           {/* Experience Filter */}
           <div className='md:col-span-2'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
-              Experience Type
+              Experience Type <span className='text-red-500'>*</span>
             </Label>
             <MultiSelect
               options={experienceOptions}
@@ -333,7 +333,7 @@ export function VineyardFilters({
         {/* Validation Error */}
         {showValidationError && (
           <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-            <p className='md:text-xl text-red-600 font-medium'>
+            <p className='text-base text-red-600 font-medium'>
               Please select the following filters before searching:{' '}
               {getMissingRequiredFilters.join(', ')}
             </p>
