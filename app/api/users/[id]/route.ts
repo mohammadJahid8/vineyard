@@ -12,9 +12,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -35,7 +35,8 @@ export async function GET(request: NextRequest, { params }: Params) {
       );
     }
 
-    const { id } = params;
+    // Await params before accessing properties
+    const { id } = await params;
 
     // Get authenticated user
     const currentUser = await User.findById(session.user.id);
@@ -90,7 +91,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       );
     }
 
-    const { id } = params;
+    // Await params before accessing properties
+    const { id } = await params;
     const body = await request.json();
 
     // Get authenticated user
@@ -203,7 +205,8 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       );
     }
 
-    const { id } = params;
+    // Await params before accessing properties
+    const { id } = await params;
 
     // Get authenticated user
     const currentUser = await User.findById(session.user.id);

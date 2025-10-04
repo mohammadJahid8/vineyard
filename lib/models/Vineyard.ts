@@ -17,6 +17,8 @@ export interface IVineyard extends Document {
   reason_5?: string;
   image_url?: string;
   maplink?: string;
+  latitude?: number;
+  longitude?: number;
   tasting_only?: boolean;
   tour_and_tasting?: boolean;
   pairing_and_lunch?: boolean;
@@ -70,6 +72,8 @@ const VineyardSchema = new Schema<IVineyard>(
     reason_5: String,
     image_url: String,
     maplink: String,
+    latitude: Number,
+    longitude: Number,
     tasting_only: Boolean,
     tour_and_tasting: Boolean,
     pairing_and_lunch: Boolean,

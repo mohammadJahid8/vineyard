@@ -14,7 +14,7 @@ import {
 // Get a specific plan
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,8 +28,11 @@ export async function GET(
 
     await connectDB();
     
+    // Await params before accessing properties
+    const { id } = await params;
+    
     const plan = await Plan.findOne({
-      _id: params.id,
+      _id: id,
       userId: session.user.id,
       isActive: true,
     });
