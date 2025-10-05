@@ -63,7 +63,7 @@ export interface Restaurant {
 
 export interface RestaurantFilterState {
   area: string;
-  type: string;
+  // type: string;
   cost: string;
   rating: string;
   search: string;

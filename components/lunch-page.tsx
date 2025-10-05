@@ -12,6 +12,7 @@ import { Utensils } from 'lucide-react';
 import { Restaurant, RestaurantFilterState } from '@/lib/types-vineyard';
 import { useTrip } from '@/lib/context/trip-context';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -25,7 +26,7 @@ export default function LunchPage() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<RestaurantFilterState>({
     area: '',
-    type: '',
+    // type: '',
     cost: '',
     rating: 'all',
     search: '',
@@ -44,9 +45,9 @@ export default function LunchPage() {
         if (filterParams.area && filterParams.area !== '') {
           params.set('region', filterParams.area);
         }
-        if (filterParams.type && filterParams.type !== '') {
-          params.set('type', filterParams.type);
-        }
+        // if (filterParams.type && filterParams.type !== '') {
+        //   params.set('type', filterParams.type);
+        // }
         if (filterParams.search && filterParams.search !== '') {
           params.set('search', filterParams.search);
         }
@@ -105,7 +106,7 @@ export default function LunchPage() {
   useEffect(() => {
     const urlFilters: RestaurantFilterState = {
       area: searchParams.get('area') || '',
-      type: searchParams.get('type') || '',
+      // type: searchParams.get('type') || '',
       cost: searchParams.get('cost') || '',
       rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
@@ -115,7 +116,7 @@ export default function LunchPage() {
     setFilters(urlFilters);
 
     // Only fetch if we have required filters
-    if (urlFilters.area && urlFilters.type && urlFilters.cost) {
+    if (urlFilters.area && urlFilters.cost) {
       fetchRestaurants(urlFilters);
     }
   }, [searchParams, fetchRestaurants]);
@@ -131,16 +132,39 @@ export default function LunchPage() {
 
   // Check if user has selected all required filters
   const hasAllRequiredFilters = useMemo(() => {
-    return filters.area !== '' && filters.type !== '' && filters.cost !== '';
+    return filters.area !== '' && filters.cost !== '';
   }, [filters]);
 
   // Use restaurants directly from API (already filtered on server)
   const filteredRestaurants = hasAllRequiredFilters ? restaurants : [];
 
-  // Pagination
-  const totalPages = Math.ceil(filteredRestaurants.length / ITEMS_PER_PAGE);
+  // Combine selected restaurant with search results, showing selected one first
+  const combinedRestaurants = useMemo(() => {
+    if (!hasAllRequiredFilters && !trip.restaurant) {
+      return [];
+    }
+
+    const selectedRestaurants = trip.restaurant
+      ? [
+          {
+            ...trip.restaurant.restaurant,
+            isSelected: true,
+          },
+        ]
+      : [];
+
+    // Get non-selected restaurants from search results
+    const nonSelectedRestaurants = filteredRestaurants
+      .filter((r) => r.id !== trip.restaurant?.restaurant.id)
+      .map((r) => ({ ...r, isSelected: false }));
+
+    return [...selectedRestaurants, ...nonSelectedRestaurants];
+  }, [filteredRestaurants, trip.restaurant, hasAllRequiredFilters]);
+
+  // Pagination - apply to combined results
+  const totalPages = Math.ceil(combinedRestaurants.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedRestaurants = filteredRestaurants.slice(
+  const paginatedRestaurants = combinedRestaurants.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
   );
@@ -177,50 +201,33 @@ export default function LunchPage() {
           Explore
         </h2>
         <RestaurantFilters onFiltersChange={handleFiltersChange} />
-
-        {/* Selected Restaurant Display */}
-        {trip.restaurant && (
-          <div className='mt-10'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-4'>
-              Selected Restaurant
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              <RestaurantCard
-                key={trip.restaurant.restaurant.id}
-                restaurant={trip.restaurant.restaurant}
-                onAddToTrip={handleAddToTrip}
-                onRemoveFromTrip={handleRemoveFromTrip}
-                isInTrip={true}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Results Header */}
-      {/* {filteredRestaurants.length > 0 && ( */}
-      <div className='container mx-auto px-4 py-6' id='restaurants'>
+      {/* {(combinedRestaurants.length > 0 || trip.restaurant) && ( */}
+      <div className='container mx-auto px-4 py-4' id='restaurants'>
         <div
-          className='mb-4 flex justify-between items-center'
-          id='restaurants'
+          className={cn(
+            'mb-4 flex  items-center',
+            combinedRestaurants.length > 0 || trip.restaurant
+              ? 'justify-between'
+              : 'justify-end'
+          )}
         >
-          {filteredRestaurants.length > 0 && (
+          {(combinedRestaurants.length > 0 || trip.restaurant) && (
             <div>
-              <h2 className='text-2xl font-bold text-gray-900'>Restaurants</h2>
-              <p className='text-gray-600 mt-1'>
-                {filteredRestaurants.length} found
-              </p>
+              <h2 className='text-2xl font-semibold md:font-bold text-gray-900'>
+                Restaurants
+              </h2>
             </div>
           )}
-          {!trip.restaurant?.restaurant && (
-            <div className='container mx-auto px-4 flex justify-end'>
-              <Button
-                className='bg-vineyard-500 hover:bg-vineyard-600'
-                onClick={() => router.push('/explore/trip')}
-              >
-                Skip
-              </Button>
-            </div>
+          {!trip.restaurant && (
+            <Button
+              className='bg-vineyard-500 hover:bg-vineyard-600'
+              onClick={() => router.push('/explore/trip')}
+            >
+              Skip
+            </Button>
           )}
         </div>
 
@@ -232,15 +239,31 @@ export default function LunchPage() {
         ) : paginatedRestaurants.length > 0 ? (
           <>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
-              {paginatedRestaurants.map((restaurant) => (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  onAddToTrip={handleAddToTrip}
-                  onRemoveFromTrip={handleRemoveFromTrip}
-                  isInTrip={trip.restaurant?.restaurant.id === restaurant.id}
-                />
-              ))}
+              {paginatedRestaurants.map((restaurant) => {
+                const isSelected = restaurant.isSelected;
+                return (
+                  <div key={restaurant.id} className='relative'>
+                    {isSelected && (
+                      <div className='absolute -top-2 -left-2 z-10'>
+                        <div className='bg-vineyard-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm'>
+                          Selected
+                        </div>
+                      </div>
+                    )}
+                    <RestaurantCard
+                      restaurant={restaurant}
+                      onAddToTrip={handleAddToTrip}
+                      onRemoveFromTrip={handleRemoveFromTrip}
+                      isInTrip={isSelected}
+                      className={
+                        isSelected
+                          ? 'border-2 border-vineyard-200 bg-gradient-to-br from-vineyard-50 to-white'
+                          : ''
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
 
             {/* Pagination */}
@@ -253,7 +276,7 @@ export default function LunchPage() {
           </>
         ) : (
           <div className='text-center py-12'>
-            {!hasAllRequiredFilters ? (
+            {!hasAllRequiredFilters && !trip.restaurant ? (
               <></>
             ) : (
               <>
@@ -268,7 +291,7 @@ export default function LunchPage() {
                   onClick={() => {
                     const clearedFilters = {
                       area: '',
-                      type: '',
+                      // type: '',
                       cost: '',
                       rating: 'all',
                       search: '',

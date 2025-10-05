@@ -213,7 +213,10 @@ export function AdminDashboard() {
                     className='pl-10'
                   />
                 </div>
-                <Button onClick={handleCreate} className='shrink-0'>
+                <Button
+                  onClick={handleCreate}
+                  className='shrink-0 bg-vineyard-500'
+                >
                   <Plus className='h-4 w-4 mr-2' />
                   Add Vineyard
                 </Button>

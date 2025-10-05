@@ -78,6 +78,7 @@ export default function ExplorePage() {
       }
 
       const result = await response.json();
+      console.log('🚀 ~ ExplorePage ~ result:', result);
       setVineyards(result.data || []);
     } catch (error) {
       console.error('Error fetching vineyards:', error);
@@ -150,10 +151,32 @@ export default function ExplorePage() {
   // Use vineyards directly from API (already filtered on server)
   const filteredVineyards = hasAllRequiredFilters ? vineyards : [];
 
-  // Pagination
-  const totalPages = Math.ceil(filteredVineyards.length / ITEMS_PER_PAGE);
+  // Combine selected vineyards with search results, showing selected ones first
+  const combinedVineyards = useMemo(() => {
+    if (!hasAllRequiredFilters && trip.vineyards.length === 0) {
+      return [];
+    }
+
+    const selectedVineyardIds = new Set(
+      trip.vineyards.map((tv) => tv.vineyard.vineyard_id)
+    );
+    const selectedVineyards = trip.vineyards.map((tv) => ({
+      ...tv.vineyard,
+      isSelected: true,
+    }));
+
+    // Get non-selected vineyards from search results
+    const nonSelectedVineyards = filteredVineyards
+      .filter((v) => !selectedVineyardIds.has(v.vineyard_id))
+      .map((v) => ({ ...v, isSelected: false }));
+
+    return [...selectedVineyards, ...nonSelectedVineyards];
+  }, [filteredVineyards, trip.vineyards, hasAllRequiredFilters]);
+
+  // Pagination - apply to combined results
+  const totalPages = Math.ceil(combinedVineyards.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedVineyards = filteredVineyards.slice(
+  const paginatedVineyards = combinedVineyards.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
   );
@@ -201,43 +224,37 @@ export default function ExplorePage() {
           Explore
         </h2>
         <VineyardFilters onFiltersChange={handleFiltersChange} />
-
-        {/* Selected Vineyards Display */}
-        {trip.vineyards.length > 0 && (
-          <div className='mt-10'>
-            <h2 className='text-xl md:text-2xl  font-semibold md:font-bold text-gray-900 mb-4'>
-              Selected Vineyards
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {trip.vineyards.map((tripVineyard, index) => (
-                <VineyardCard
-                  key={index}
-                  vineyard={tripVineyard.vineyard}
-                  offers={
-                    tripVineyard.offer
-                      ? [tripVineyard.offer]
-                      : getVineyardOffers(tripVineyard.vineyard.vineyard_id)
-                  }
-                  onAddToTrip={handleAddToTrip}
-                  onRemoveFromTrip={handleRemoveFromTrip}
-                  isInTrip={true}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Results Header */}
-      {filteredVineyards.length > 0 && (
-        <div className='container mx-auto px-4 py-6' id='vineyards'>
+      {(combinedVineyards.length > 0 || trip.vineyards.length > 0) && (
+        <div className='container mx-auto px-4 py-4' id='vineyards'>
           <div className='mb-4'>
-            <h2 className='text-2xl  font-semibold md:font-bold text-gray-900'>
-              Vineyards
-            </h2>
-            <p className='text-gray-600 mt-1'>
-              {filteredVineyards.length} found
-            </p>
+            <div className='flex items-center justify-between'>
+              <div>
+                <h2 className='text-2xl font-semibold md:font-bold text-gray-900'>
+                  Vineyards
+                </h2>
+                {/* <p className='text-gray-600 mt-1'>
+                  {trip.vineyards.length > 0 && (
+                    <span className='text-vineyard-600 font-medium'>
+                      {trip.vineyards.length} selected
+                    </span>
+                  )}
+                  {trip.vineyards.length > 0 &&
+                    filteredVineyards.length > 0 && (
+                      <span className='text-gray-400 mx-2'>•</span>
+                    )}
+                  {filteredVineyards.length > 0 && (
+                    <span>{filteredVineyards.length} available</span>
+                  )}
+                  {trip.vineyards.length === 0 &&
+                    filteredVineyards.length === 0 && (
+                      <span>No vineyards found</span>
+                    )}
+                </p> */}
+              </div>
+            </div>
           </div>
 
           {/* Vineyard Grid */}
@@ -248,16 +265,32 @@ export default function ExplorePage() {
           ) : paginatedVineyards.length > 0 ? (
             <>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
-                {paginatedVineyards.map((vineyard) => (
-                  <VineyardCard
-                    key={vineyard.vineyard_id}
-                    vineyard={vineyard}
-                    offers={getVineyardOffers(vineyard.vineyard_id)}
-                    onAddToTrip={handleAddToTrip}
-                    onRemoveFromTrip={handleRemoveFromTrip}
-                    isInTrip={isVineyardInTrip(vineyard.vineyard_id)}
-                  />
-                ))}
+                {paginatedVineyards.map((vineyard) => {
+                  const isSelected = vineyard.isSelected;
+                  return (
+                    <div key={vineyard.vineyard_id} className='relative'>
+                      {isSelected && (
+                        <div className='absolute -top-2 -left-2 z-10'>
+                          <div className='bg-vineyard-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm'>
+                            Selected
+                          </div>
+                        </div>
+                      )}
+                      <VineyardCard
+                        vineyard={vineyard}
+                        offers={getVineyardOffers(vineyard.vineyard_id)}
+                        onAddToTrip={handleAddToTrip}
+                        onRemoveFromTrip={handleRemoveFromTrip}
+                        isInTrip={isSelected}
+                        className={
+                          isSelected
+                            ? 'border-2 border-vineyard-200 bg-gradient-to-br from-vineyard-50 to-white'
+                            : ''
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Pagination */}
@@ -270,7 +303,7 @@ export default function ExplorePage() {
             </>
           ) : (
             <div className='text-center py-12'>
-              {!hasAllRequiredFilters ? (
+              {!hasAllRequiredFilters && trip.vineyards.length === 0 ? (
                 <></>
               ) : (
                 <>
@@ -300,13 +333,11 @@ export default function ExplorePage() {
               )}
             </div>
           )}
-
-          {/* Fixed Next Button - Bottom Right */}
         </div>
       )}
 
       {hasVineyards && (
-        <div className='container mx-auto px-4 mt-4 flex justify-end'>
+        <div className='container mx-auto px-4 flex justify-end'>
           <Button
             className='bg-vineyard-500 hover:bg-vineyard-600'
             onClick={() => router.push('/explore/lunch')}

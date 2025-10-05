@@ -69,13 +69,13 @@ export async function POST(request: NextRequest) {
 
     const { vineyards, restaurant, title } = await request.json();
 
-    if (!vineyards || !Array.isArray(vineyards) || vineyards.length === 0) {
-      return createErrorResponse(
-        ErrorType.VALIDATION_ERROR,
-        'At least one vineyard is required',
-        HttpStatus.BAD_REQUEST
-      );
-    }
+    // if (!vineyards || !Array.isArray(vineyards) || vineyards.length === 0) {
+    //   return createErrorResponse(
+    //     ErrorType.VALIDATION_ERROR,
+    //     'At least one vineyard is required',
+    //     HttpStatus.BAD_REQUEST
+    //   );
+    // }
 
     if (vineyards.length > 10) {
       return createErrorResponse(

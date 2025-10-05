@@ -58,7 +58,7 @@ export function RestaurantFilters({
   const getInitialFilters = (): RestaurantFilterState => {
     return {
       area: searchParams.get('area') || '',
-      type: searchParams.get('type') || '',
+      // type: searchParams.get('type') || '',
       cost: searchParams.get('cost') || '',
       rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
@@ -87,7 +87,7 @@ export function RestaurantFilters({
 
     // Only add non-default values to URL
     if (newFilters.area !== '') params.set('area', newFilters.area);
-    if (newFilters.type !== '') params.set('type', newFilters.type);
+    //  if (newFilters.type !== '') params.set('type', newFilters.type);
     if (newFilters.cost !== '') params.set('cost', newFilters.cost);
     if (newFilters.rating !== 'all') params.set('rating', newFilters.rating);
     if (newFilters.search) params.set('search', newFilters.search);
@@ -102,7 +102,7 @@ export function RestaurantFilters({
   const hasRequiredTempFilters = useMemo(() => {
     return (
       tempFilters.area !== '' &&
-      tempFilters.type !== '' &&
+      // tempFilters.type !== '' &&
       tempFilters.cost !== ''
     );
   }, [tempFilters]);
@@ -111,7 +111,7 @@ export function RestaurantFilters({
   const getMissingRequiredFilters = useMemo(() => {
     const missing = [];
     if (tempFilters.area === '') missing.push('Area');
-    if (tempFilters.type === '') missing.push('Type');
+    // if (tempFilters.type === '') missing.push('Type');
     if (tempFilters.cost === '') missing.push('Cost');
     return missing;
   }, [tempFilters]);
@@ -170,7 +170,7 @@ export function RestaurantFilters({
   const clearFilters = useCallback(() => {
     const clearedFilters: RestaurantFilterState = {
       area: '',
-      type: '',
+      // type: '',
       cost: '',
       rating: 'all',
       search: '',
@@ -186,7 +186,7 @@ export function RestaurantFilters({
 
   const hasActiveFilters =
     (appliedFilters.area && appliedFilters.area !== '') ||
-    (appliedFilters.type && appliedFilters.type !== '') ||
+    // (appliedFilters.type && appliedFilters.type !== '') ||
     (appliedFilters.cost && appliedFilters.cost !== '') ||
     (appliedFilters.rating && appliedFilters.rating !== 'all') ||
     (appliedFilters.search && appliedFilters.search !== '');
@@ -194,7 +194,7 @@ export function RestaurantFilters({
   const hasUnappliedChanges = useMemo(
     () =>
       tempFilters.area !== appliedFilters.area ||
-      tempFilters.type !== appliedFilters.type ||
+      // tempFilters.type !== appliedFilters.type ||
       tempFilters.cost !== appliedFilters.cost ||
       tempFilters.rating !== appliedFilters.rating ||
       searchInput !== appliedFilters.search,
@@ -207,7 +207,7 @@ export function RestaurantFilters({
         {/* Filter Row */}
         <div className='grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 mb-4'>
           {/* Location Filter */}
-          <div className='md:col-span-3'>
+          <div className='md:col-span-5'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
               Area <span className='text-red-500'>*</span>
             </Label>
@@ -229,7 +229,7 @@ export function RestaurantFilters({
           </div>
 
           {/* Type Filter */}
-          <div className='md:col-span-3'>
+          {/* <div className='md:col-span-3'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
               Type <span className='text-red-500'>*</span>
             </Label>
@@ -248,10 +248,10 @@ export function RestaurantFilters({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           {/* Cost Filter */}
-          <div className='md:col-span-3'>
+          <div className='md:col-span-5'>
             <Label className='md:text-xl font-medium text-black mb-2 block'>
               Cost <span className='text-red-500'>*</span>
             </Label>
@@ -312,7 +312,7 @@ export function RestaurantFilters({
           </div> */}
 
           {/* Action Buttons */}
-          <div className='flex items-end gap-2 md:col-span-3'>
+          <div className='flex items-end gap-2 md:col-span-2'>
             <Button
               onClick={applyFilters}
               className='bg-vineyard-500 hover:bg-vineyard-600 h-9 px-3 w-full'
@@ -366,7 +366,7 @@ export function RestaurantFilters({
                 />
               </Badge>
             )}
-            {appliedFilters.type && appliedFilters.type !== '' && (
+            {/* {appliedFilters.type && appliedFilters.type !== '' && (
               <Badge
                 variant='secondary'
                 className='bg-vineyard-100 text-vineyard-800'
@@ -387,7 +387,7 @@ export function RestaurantFilters({
                   }}
                 />
               </Badge>
-            )}
+            )} */}
             {appliedFilters.cost && appliedFilters.cost !== '' && (
               <Badge
                 variant='secondary'
@@ -445,7 +445,7 @@ export function RestaurantFilters({
       applyFilters,
       clearFilters,
       updateTempFilters,
-      typeOptions,
+      // typeOptions,
       costOptions,
       locationOptions,
     ]
@@ -466,7 +466,7 @@ export function RestaurantFilters({
             `(${
               [
                 appliedFilters.area !== '' ? appliedFilters.area : null,
-                appliedFilters.type !== '' ? appliedFilters.type : null,
+                // appliedFilters.type !== '' ? appliedFilters.type : null,
                 appliedFilters.cost !== '' ? appliedFilters.cost : null,
                 appliedFilters.rating !== 'all' ? appliedFilters.rating : null,
                 appliedFilters.search !== '' ? appliedFilters.search : null,

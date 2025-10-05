@@ -29,7 +29,7 @@ export interface TripState {
 
 interface TripContextType {
   trip: TripState;
-  addVineyard: (vineyard: Vineyard, offer?: Offer) => boolean; // Returns false if limit reached
+  addVineyard: (vineyard: Vineyard, offer?: Offer) => Promise<boolean>; // Returns false if limit reached
   addRestaurant: (restaurant: Restaurant) => Promise<void>;
   removeVineyard: (vineyardId: string) => Promise<void>;
   removeRestaurant: () => Promise<void>;
@@ -136,6 +136,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
   };
 
   const removeVineyard = async (vineyardId: string) => {
+    // console.log('🚀 ~ removeVineyard ~ vineyardId:', vineyardId);
     const newTrip = {
       ...trip,
       vineyards: trip.vineyards.filter(
@@ -249,13 +250,14 @@ export function TripProvider({ children }: { children: ReactNode }) {
   };
 
   const savePlanWithState = async (tripState: TripState) => {
+    // console.log('🚀 ~ savePlanWithState ~ tripState:', tripState);
     if (!session?.user?.id) {
       throw new Error('User not authenticated');
     }
 
-    if (tripState.vineyards.length === 0) {
-      return; // Nothing to save
-    }
+    // if (tripState.vineyards.length === 0) {
+    //   return; // Nothing to save
+    // }
 
     try {
       const response = await fetch('/api/plans', {

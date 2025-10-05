@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Clock, ExternalLink, Plus, X } from 'lucide-react';
 import { Restaurant } from '@/lib/types-vineyard';
+import { cn } from '@/lib/utils';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onAddToTrip: (restaurantId: string) => void;
   onRemoveFromTrip: (restaurantId: string) => void;
   isInTrip: boolean;
+  className?: string;
 }
 
 export function RestaurantCard({
@@ -18,6 +20,7 @@ export function RestaurantCard({
   onAddToTrip,
   onRemoveFromTrip,
   isInTrip,
+  className,
 }: RestaurantCardProps) {
   const fallbackImage = '/placeholder.jpg';
 
@@ -47,7 +50,12 @@ export function RestaurantCard({
   };
 
   return (
-    <Card className='group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-vineyard-300 bg-white overflow-hidden'>
+    <Card
+      className={cn(
+        'group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-vineyard-300 bg-white overflow-hidden',
+        className
+      )}
+    >
       {/* Image */}
       <div className='relative h-48 overflow-hidden'>
         <img
