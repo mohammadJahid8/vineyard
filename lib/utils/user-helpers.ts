@@ -23,8 +23,8 @@ export async function createUserSubscription(user: IUser, planType: string = 'fr
   const expirationDate = new Date();
   
   if (planType === 'free') {
-    // expirationDate.setDate(expirationDate.getDate() + 3); // 3 days for free tier
-    expirationDate.setMinutes(expirationDate.getMinutes() + 3); // 3 minutes for free tier (testing)
+    expirationDate.setDate(expirationDate.getDate() + 3); // 3 days for free tier
+    // expirationDate.setMinutes(expirationDate.getMinutes() + 3); // 3 minutes for free tier (testing)
     user.hasUsedFreeTier = true; // Mark that user has used free tier
   } else {
     expirationDate.setDate(expirationDate.getDate() + 30); // 30 days for paid plans
