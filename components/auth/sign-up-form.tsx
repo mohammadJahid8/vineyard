@@ -63,7 +63,7 @@ export default function SignUpForm() {
   const handleGoogleSignUp = async () => {
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/plans' });
+      await signIn('google', { callbackUrl: '/explore' });
     } catch (error) {
       setError('Google sign-up failed. Please try again.');
       setLoading(false);

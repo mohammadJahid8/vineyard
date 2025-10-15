@@ -138,8 +138,13 @@ export default function ExplorePage() {
     [fetchVineyards]
   );
 
-  // Check if user has selected all required filters
-  const hasAllRequiredFilters = useMemo(() => {
+  // Check if user has selected all required filters or has a search query
+  const hasValidFilters = useMemo(() => {
+    // Allow search without requiring other filters
+    if (filters.search && filters.search.trim() !== '') {
+      return true;
+    }
+    // Otherwise, require all other filters
     return (
       filters.area !== '' &&
       filters.type !== '' &&
@@ -149,11 +154,11 @@ export default function ExplorePage() {
   }, [filters]);
 
   // Use vineyards directly from API (already filtered on server)
-  const filteredVineyards = hasAllRequiredFilters ? vineyards : [];
+  const filteredVineyards = hasValidFilters ? vineyards : [];
 
   // Combine selected vineyards with search results, showing selected ones first
   const combinedVineyards = useMemo(() => {
-    if (!hasAllRequiredFilters && trip.vineyards.length === 0) {
+    if (!hasValidFilters && trip.vineyards.length === 0) {
       return [];
     }
 
@@ -171,7 +176,7 @@ export default function ExplorePage() {
       .map((v) => ({ ...v, isSelected: false }));
 
     return [...selectedVineyards, ...nonSelectedVineyards];
-  }, [filteredVineyards, trip.vineyards, hasAllRequiredFilters]);
+  }, [filteredVineyards, trip.vineyards, hasValidFilters]);
 
   // Pagination - apply to combined results
   const totalPages = Math.ceil(combinedVineyards.length / ITEMS_PER_PAGE);
@@ -303,7 +308,7 @@ export default function ExplorePage() {
             </>
           ) : (
             <div className='text-center py-12'>
-              {!hasAllRequiredFilters && trip.vineyards.length === 0 ? (
+              {!hasValidFilters && trip.vineyards.length === 0 ? (
                 <></>
               ) : (
                 <>

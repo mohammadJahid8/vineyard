@@ -1,4 +1,5 @@
 import VineyardEditForm from '@/components/vineyard-edit-form';
+import { SimpleAccessGuard } from '@/components/simple-access-guard';
 
 interface PageProps {
   params: Promise<{
@@ -8,5 +9,9 @@ interface PageProps {
 
 export default async function EditVineyardPage({ params }: PageProps) {
   const { id } = await params;
-  return <VineyardEditForm vineyardId={id} />;
+  return (
+    <SimpleAccessGuard>
+      <VineyardEditForm vineyardId={id} />
+    </SimpleAccessGuard>
+  );
 }

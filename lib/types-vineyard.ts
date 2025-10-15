@@ -15,6 +15,8 @@ export interface Vineyard {
   reason_5?: string;
   image_url?: string;
   maplink?: string;
+  latitude?: number;
+  longitude?: number;
   tasting_only?: boolean;
   tour_and_tasting?: boolean;
   pairing_and_lunch?: boolean;
@@ -39,7 +41,7 @@ export interface FilterState {
 }
 
 export interface Restaurant {
-  id: string;
+  id: string; // This will be MongoDB's _id transformed by toJSON
   region: string;
   sub_region: string;
   actual_type: string;

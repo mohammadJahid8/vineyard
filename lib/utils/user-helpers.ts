@@ -14,11 +14,18 @@ export async function findUserWithMethods(email: string): Promise<IUser | null> 
 
 // Helper function to create a subscription for a user
 export async function createUserSubscription(user: IUser, planType: string = 'free'): Promise<IUser> {
+  // Check if user is trying to use free tier again
+  if (planType === 'free' && user.hasUsedFreeTier && user.role !== 'admin') {
+    throw new Error('Free tier can only be used once per user');
+  }
+
   // Create subscription based on plan type
   const expirationDate = new Date();
   
   if (planType === 'free') {
-    expirationDate.setMinutes(expirationDate.getMinutes() + 30); // 5 minutes for testing
+    // expirationDate.setDate(expirationDate.getDate() + 3); // 3 days for free tier
+    expirationDate.setMinutes(expirationDate.getMinutes() + 3); // 3 minutes for free tier (testing)
+    user.hasUsedFreeTier = true; // Mark that user has used free tier
   } else {
     expirationDate.setDate(expirationDate.getDate() + 30); // 30 days for paid plans
   }

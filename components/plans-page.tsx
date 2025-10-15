@@ -20,6 +20,8 @@ import {
   Gift,
   X,
   Grape,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { planOptions } from '@/lib/data';
 
@@ -32,11 +34,64 @@ export default function PlansPage() {
   const { data: session } = useSession();
   const { selectPlan } = useSimpleSubscription();
   const [loading, setLoading] = useState(false);
+  const [userPlanInfo, setUserPlanInfo] = useState<{
+    selectedPlan?: string;
+    planSelectedAt?: string;
+    hasUsedFreeTier?: boolean;
+    isSubscriptionActive?: boolean;
+  } | null>(null);
+
+  // Fetch user's current plan information
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (session?.user?.email) {
+        try {
+          const response = await fetch('/api/users/plan');
+          if (response.ok) {
+            const data = await response.json();
+            setUserPlanInfo(data.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user plan:', error);
+        }
+      }
+    };
+
+    fetchUserPlan();
+  }, [session]);
 
   const handleSelectPlan = async (planId: string) => {
     if (!session?.user?.email) {
       // Handle case where user is not logged in
       router.push('/sign-in');
+      return;
+    }
+
+    // Prevent free tier selection if already used
+    if (planId === 'free' && userPlanInfo?.hasUsedFreeTier) {
+      alert('You have already used the free tier. Please choose a paid plan.');
+      return;
+    }
+
+    // Prevent any plan selection if user already has an active subscription
+    if (userPlanInfo?.isSubscriptionActive) {
+      alert(
+        'You already have an active subscription. Please wait for it to expire before selecting a new plan.'
+      );
+      return;
+    }
+
+    // Prevent selecting the same plan if user already selected it before (even if expired)
+    if (userPlanInfo?.selectedPlan === planId) {
+      if (planId === 'free') {
+        alert(
+          'You have already used the free tier. Please choose a paid plan.'
+        );
+      } else {
+        alert(
+          `You have already selected the ${planId} plan before. Please choose a different plan or wait for your current subscription to expire.`
+        );
+      }
       return;
     }
 
@@ -94,6 +149,34 @@ export default function PlansPage() {
           </p>
         </div>
 
+        {/* Subscription Status Message */}
+        {userPlanInfo &&
+          (userPlanInfo.selectedPlan || userPlanInfo.isSubscriptionActive) && (
+            <div className='mb-8'>
+              <Card className='bg-blue-50 border-blue-200'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    {userPlanInfo.isSubscriptionActive ? (
+                      <>
+                        <CheckCircle className='h-5 w-5 text-green-600' />
+                        <span className='text-green-800 font-medium'>
+                          You have an active {userPlanInfo.selectedPlan} plan
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className='h-5 w-5 text-amber-600' />
+                        <span className='text-amber-800 font-medium'>
+                          Your {userPlanInfo.selectedPlan} plan has expired.
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
         {/* Desktop Plans Grid */}
         <div className='hidden lg:grid grid-cols-4 gap-6 mb-8'>
           {planOptions.map((plan) => (
@@ -129,12 +212,12 @@ export default function PlansPage() {
 
               <CardContent className='space-y-4'>
                 <div className='space-y-3'>
-                  <div className='flex justify-between items-center text-sm'>
+                  {/* <div className='flex justify-between items-center text-sm'>
                     <span className='text-gray-600'>Saved Selections</span>
                     <span className='font-medium'>
                       {plan.features.savedSelections}
                     </span>
-                  </div>
+                  </div> */}
                   <div className='flex justify-between items-center text-sm'>
                     <span className='text-gray-600'>Saved For</span>
                     <span className='font-medium'>
@@ -178,17 +261,37 @@ export default function PlansPage() {
                 <Button
                   className={`w-full mt-6 ${
                     plan.id === 'free'
-                      ? 'bg-vineyard-500 text-white hover:bg-vineyard-600'
+                      ? userPlanInfo?.hasUsedFreeTier ||
+                        userPlanInfo?.isSubscriptionActive ||
+                        userPlanInfo?.selectedPlan === plan.id
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-vineyard-500 text-white hover:bg-vineyard-600'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   onClick={() => handleSelectPlan(plan.id)}
-                  disabled={loading || plan.id !== 'free'}
+                  disabled={
+                    loading ||
+                    plan.id !== 'free' ||
+                    (plan.id === 'free' && userPlanInfo?.hasUsedFreeTier) ||
+                    userPlanInfo?.isSubscriptionActive ||
+                    userPlanInfo?.selectedPlan === plan.id
+                  }
                 >
                   {plan.id === 'free' ? (
-                    <>
-                      Start Free Tour
-                      <ArrowRight className='w-4 h-4 ml-2' />
-                    </>
+                    userPlanInfo?.hasUsedFreeTier ||
+                    userPlanInfo?.isSubscriptionActive ? (
+                      <>
+                        <Lock className='w-4 h-4 mr-2' />
+                        {userPlanInfo?.isSubscriptionActive
+                          ? 'Active Plan'
+                          : 'Already Used'}
+                      </>
+                    ) : (
+                      <>
+                        Start Free Tour
+                        <ArrowRight className='w-4 h-4 ml-2' />
+                      </>
+                    )
                   ) : (
                     <>
                       <Lock className='w-4 h-4 mr-2' />
@@ -418,13 +521,28 @@ export default function PlansPage() {
                       size='sm'
                       className={`text-xs h-9 whitespace-nowrap min-w-[80px] ${
                         plan.id === 'free'
-                          ? 'bg-vineyard-500 text-white hover:bg-vineyard-600'
+                          ? userPlanInfo?.hasUsedFreeTier ||
+                            userPlanInfo?.isSubscriptionActive ||
+                            userPlanInfo?.selectedPlan === plan.id
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-vineyard-500 text-white hover:bg-vineyard-600'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                       onClick={() => handleSelectPlan(plan.id)}
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        plan.id !== 'free' ||
+                        (plan.id === 'free' && userPlanInfo?.hasUsedFreeTier) ||
+                        userPlanInfo?.isSubscriptionActive ||
+                        userPlanInfo?.selectedPlan === plan.id
+                      }
                     >
-                      {plan.id === 'free' ? 'Start' : 'Coming'}
+                      {plan.id === 'free'
+                        ? userPlanInfo?.hasUsedFreeTier ||
+                          userPlanInfo?.isSubscriptionActive
+                          ? 'Used'
+                          : 'Start'
+                        : 'Coming'}
                     </Button>
                   ))}
                 </div>

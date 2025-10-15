@@ -6,9 +6,9 @@ import MapPlanPage from '@/components/map-plan-page';
 export default async function Plan() {
   const session = await getServerSession(authOptions);
 
-  // if (!session) {
-  //   redirect('/sign-in');
-  // }
+  if (!session) {
+    redirect('/sign-in');
+  }
 
   return <MapPlanPage />;
 }

@@ -6,9 +6,9 @@ import ProfilePage from '@/components/profile-page';
 export default async function Profile() {
   const session = await getServerSession(authOptions);
 
-  // if (!session) {
-  //   redirect('/sign-in');
-  // }
+  if (!session) {
+    redirect('/sign-in');
+  }
 
   return <ProfilePage />;
 }

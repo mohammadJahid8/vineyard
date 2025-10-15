@@ -81,7 +81,30 @@ export default function SignInForm() {
         // Get session to redirect properly
         const session = await getSession();
         if (session) {
-          router.push('/plans');
+          // Check if user already has a plan before redirecting
+          try {
+            const planResponse = await fetch('/api/users/plan');
+            if (planResponse.ok) {
+              const planData = await planResponse.json();
+
+              // If user has never selected a plan, go to plans page
+              if (
+                !planData.data.selectedPlan &&
+                !planData.data.planSelectedAt
+              ) {
+                router.push('/plans');
+              } else {
+                // User has already selected a plan (active or expired), go to explore
+                router.push('/explore');
+              }
+            } else {
+              // If can't check plan status, default to explore
+              router.push('/explore');
+            }
+          } catch (error) {
+            console.error('Error checking plan status:', error);
+            router.push('/explore');
+          }
           router.refresh();
         }
       }
@@ -95,7 +118,7 @@ export default function SignInForm() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/plans' });
+      await signIn('google', { callbackUrl: '/explore' });
     } catch (error) {
       setError('Google sign-in failed. Please try again.');
       setLoading(false);

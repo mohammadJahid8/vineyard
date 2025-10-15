@@ -3,9 +3,19 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MapPin, Clock, ExternalLink, Plus, X } from 'lucide-react';
+import {
+  Star,
+  MapPin,
+  Clock,
+  ExternalLink,
+  Plus,
+  X,
+  Image as ImageIcon,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { Restaurant } from '@/lib/types-vineyard';
 import { cn } from '@/lib/utils';
+import { SmartImage } from '@/components/ui/smart-image';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -57,15 +67,18 @@ export function RestaurantCard({
       )}
     >
       {/* Image */}
-      <div className='relative h-48 overflow-hidden'>
-        <img
-          src={restaurant.image_url}
+      <div className='relative h-48 overflow-hidden bg-gray-100'>
+        <SmartImage
+          imageUrl={restaurant.image_url}
+          latitude={restaurant.latitude}
+          longitude={restaurant.longitude}
+          name={restaurant.restaurants}
+          type='restaurant'
           alt={restaurant.restaurants}
           className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-300'
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = fallbackImage;
-          }}
+          fill
+          showFallbackText={true}
+          subText={restaurant.sub_region}
         />
         <div className='absolute top-3 right-3'>
           <Button
@@ -113,9 +126,9 @@ export function RestaurantCard({
             <Badge variant='outline' className='text-xs'>
               {restaurant.actual_type}
             </Badge>
-            <Badge className={`text-xs ${getBracketColor(restaurant.bracket)}`}>
+            {/* <Badge className={`text-xs ${getBracketColor(restaurant.bracket)}`}>
               Bracket {restaurant.bracket}
-            </Badge>
+            </Badge> */}
           </div>
 
           {/* Cost and Days */}

@@ -11,11 +11,12 @@ import {
   Plus,
   Minus,
   ExternalLink,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Vineyard, Offer } from '@/lib/types-vineyard';
-import Image from 'next/image';
+import { SmartImage } from '@/components/ui/smart-image';
 
 interface VineyardCardProps {
   vineyard: Vineyard;
@@ -74,26 +75,25 @@ export function VineyardCard({
       )}
     >
       {/* Image */}
-      {vineyard.image_url && (
-        <div className='relative h-48 overflow-hidden'>
-          <Image
-            src={vineyard.image_url}
-            alt={vineyard.vineyard}
-            className='w-full h-full object-cover'
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-            width={100}
-            height={100}
-          />
-          <div className='absolute top-3 right-3'>
-            <Badge className={cn('text-xs', getTypeColor(vineyard.type))}>
-              {vineyard.type}
-            </Badge>
-          </div>
+      <div className='relative h-48 overflow-hidden bg-gray-100'>
+        <SmartImage
+          imageUrl={vineyard.image_url}
+          latitude={vineyard.latitude}
+          longitude={vineyard.longitude}
+          name={vineyard.vineyard}
+          type='vineyard'
+          alt={`${vineyard.vineyard} thumbnail`}
+          className='w-full h-full object-cover'
+          fill
+          showFallbackText={true}
+          subText={vineyard.sub_region}
+        />
+        <div className='absolute top-3 right-3'>
+          <Badge className={cn('text-xs', getTypeColor(vineyard.type))}>
+            {vineyard.type}
+          </Badge>
         </div>
-      )}
+      </div>
 
       <CardHeader className='pb-3'>
         <div className='flex items-start justify-between'>

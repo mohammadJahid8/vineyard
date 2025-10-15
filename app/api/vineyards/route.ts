@@ -63,10 +63,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      const searchRegex = new RegExp(search, 'i');
       const searchConditions = [
-        { vineyard: { $regex: search, $options: 'i' } },
-        { region: { $regex: search, $options: 'i' } },
-        { sub_region: { $regex: search, $options: 'i' } },
+        { vineyard: searchRegex },
+        { vineyard_id: searchRegex },
+        { region: searchRegex },
+        { sub_region: searchRegex },
+        { type: searchRegex },
       ];
       
       if (query.$or) {
@@ -82,7 +85,9 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🚀 ~ GET ~ vineyards query:', JSON.stringify(query, null, 2))
-    const vineyards = await Vineyard.find(query).sort({ g: -1 }).limit(10);
+    // const vineyards = await Vineyard.find(query).sort({ g: -1 }).limit(10);
+    const vineyards = await Vineyard.find(query).sort({ g: -1 });
+    console.log('🚀 ~ GET ~ vineyards:', vineyards)
 
     return createSuccessResponse(vineyards, 'Vineyards fetched successfully');
   } catch (error) {

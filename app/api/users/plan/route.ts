@@ -29,15 +29,39 @@ export async function POST(req: NextRequest) {
       return createErrorResponse(ErrorType.NOT_FOUND, 'User not found', 404);
     }
 
+    // Check if user is trying to use free tier again
+    if (plan === 'free' && user.hasUsedFreeTier && user.role !== 'admin') {
+      return createErrorResponse(
+        ErrorType.VALIDATION_ERROR, 
+        'Free tier can only be used once per user. Please choose a paid plan.', 
+        400
+      );
+    }
+
     // Create subscription for the selected plan
     await createUserSubscription(user, plan);
 
     return createSuccessResponse(
-      { selectedPlan: user.selectedPlan, planSelectedAt: user.planSelectedAt },
+      { 
+        selectedPlan: user.selectedPlan, 
+        planSelectedAt: user.planSelectedAt,
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
+        hasUsedFreeTier: user.hasUsedFreeTier
+      },
       'Plan updated successfully'
     );
   } catch (error) {
     console.error('Error updating user plan:', error);
+    
+    // Handle specific error for free tier restriction
+    if (error instanceof Error && error.message === 'Free tier can only be used once per user') {
+      return createErrorResponse(
+        ErrorType.VALIDATION_ERROR, 
+        'Free tier can only be used once per user. Please choose a paid plan.', 
+        400
+      );
+    }
+    
     return createErrorResponse(ErrorType.INTERNAL_SERVER_ERROR, 'Internal server error', 500);
   }
 }
@@ -66,6 +90,7 @@ export async function GET(req: NextRequest) {
       isSubscriptionActive: user.isSubscriptionActive,
       hasAccess: hasAccess,
       isAdmin: user.role === 'admin',
+      hasUsedFreeTier: user.hasUsedFreeTier, // Include this for frontend logic
     });
   } catch (error) {
     console.error('Error fetching user plan:', error);

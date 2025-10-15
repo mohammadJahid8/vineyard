@@ -10,11 +10,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { User, Crown, Star, Zap, Grape, Clock } from 'lucide-react';
+import { User, Crown, Star, Zap, Grape, Clock, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
@@ -27,6 +27,18 @@ export default function ProfilePage() {
     hasAccess?: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    try {
+      await signOut({
+        callbackUrl: '/',
+        redirect: true,
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchUserPlan = async () => {
@@ -210,6 +222,24 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* Sign Out Section */}
+              <div className='border-t pt-6'>
+                <div className='flex flex-col space-y-3'>
+                  <h3 className='text-lg font-semibold'>Account Actions</h3>
+                  <Button
+                    variant='outline'
+                    onClick={handleSignOut}
+                    className='w-full justify-center border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300'
+                  >
+                    <LogOut className='h-4 w-4 mr-2' />
+                    Sign Out
+                  </Button>
+                  <p className='text-xs text-gray-500 text-center'>
+                    You will be redirected to the home page
+                  </p>
+                </div>
               </div>
 
               {/* <div className='pt-4'>

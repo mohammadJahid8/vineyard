@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IRestaurant extends Document {
-  id: string;
   region: string;
   sub_region: string;
   actual_type: string;
@@ -25,11 +24,6 @@ export interface IRestaurant extends Document {
 
 const RestaurantSchema = new Schema<IRestaurant>(
   {
-    id: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     region: {
       type: String,
       required: true,

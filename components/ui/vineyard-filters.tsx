@@ -107,24 +107,35 @@ export function VineyardFilters({
   };
 
   // Check if required filters are selected in temp filters
+  // Allow search without requiring other filters
   const hasRequiredTempFilters = useMemo(() => {
+    // If user has entered a search term, allow it without other required filters
+    if (searchInput.trim() !== '') {
+      return true;
+    }
+    // Otherwise, require all other filters
     return (
       tempFilters.area !== '' &&
       tempFilters.type !== '' &&
       tempFilters.cost !== '' &&
       tempFilters.experience.length > 0
     );
-  }, [tempFilters]);
+  }, [tempFilters, searchInput]);
 
   // Get missing filter names for dynamic error message
   const getMissingRequiredFilters = useMemo(() => {
+    // Don't show missing filters if user is just searching
+    if (searchInput.trim() !== '') {
+      return [];
+    }
+
     const missing = [];
     if (tempFilters.area === '') missing.push('Area');
     if (tempFilters.type === '') missing.push('Type');
     if (tempFilters.cost === '') missing.push('Cost');
     if (tempFilters.experience.length === 0) missing.push('Experience Type');
     return missing;
-  }, [tempFilters]);
+  }, [tempFilters, searchInput]);
 
   // Apply filters when Go button is clicked
   const applyFilters = useCallback(() => {

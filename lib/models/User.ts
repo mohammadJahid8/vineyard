@@ -12,6 +12,7 @@ export interface IUser extends Document {
   planSelectedAt?: Date;
   subscriptionExpiresAt?: Date;
   isSubscriptionActive: boolean;
+  hasUsedFreeTier: boolean; // Track if user has used free tier before
   isActive: boolean;
   lastLoginAt?: Date;
   createdAt: Date;
@@ -69,6 +70,10 @@ const UserSchema = new Schema<IUser>(
       type: Date,
     },
     isSubscriptionActive: {
+      type: Boolean,
+      default: false,
+    },
+    hasUsedFreeTier: {
       type: Boolean,
       default: false,
     },
@@ -131,11 +136,18 @@ UserSchema.methods.hasAccess = function () {
 };
 
 UserSchema.methods.createSubscription = function (planType = 'free') {
+  // Check if user is trying to use free tier again
+  if (planType === 'free' && this.hasUsedFreeTier && this.role !== 'admin') {
+    throw new Error('Free tier can only be used once per user');
+  }
+
   // Create subscription based on plan type
   const expirationDate = new Date();
   
   if (planType === 'free') {
-    expirationDate.setMinutes(expirationDate.getMinutes() + 30); // 5 minutes for testing
+    // expirationDate.setDate(expirationDate.getDate() + 3); // 3 days for free tier
+    expirationDate.setMinutes(expirationDate.getMinutes() + 3); // 3 minutes for free tier (testing)
+    this.hasUsedFreeTier = true; // Mark that user has used free tier
   } else {
     expirationDate.setDate(expirationDate.getDate() + 30); // 30 days for paid plans
   }

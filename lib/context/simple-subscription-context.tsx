@@ -74,16 +74,13 @@ export function SimpleSubscriptionProvider({
 
         setSubscription(newSubscription);
 
-        // If user doesn't have a plan, redirect to plans page (only on initial check, not timer)
-        if (!data.data.selectedPlan && data.success && subscription.loading) {
-          router.push('/plans');
-        }
-
-        // If subscription expired and user had access before, redirect to plans page
+        // Only redirect to plans if user has never selected a plan before (not just expired)
+        // This prevents redirecting users who had a plan but it expired
         if (
-          !newSubscription.hasAccess &&
-          subscription.hasAccess &&
-          !subscription.loading
+          !data.data.selectedPlan &&
+          !data.data.planSelectedAt &&
+          data.success &&
+          subscription.loading
         ) {
           router.push('/plans');
         }
