@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Vineyard Tour Planner',
   description: 'Plan your perfect vineyard tour experience',
-  generator: 'v0.dev',
+  generator: 'champagne-tour',
 };
 
 export default function RootLayout({
