@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const revalidate = 60 * 60 * 24; // cache 24h on the server
+// export const revalidate = 60 * 60 * 24; // cache 24h on the server
+export const revalidate = 60; // cache 1m on the server
 
 function bad(msg: string, code = 400) {
   return new NextResponse(msg, { status: code });
