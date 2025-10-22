@@ -9,95 +9,10 @@ import Image from 'next/image';
 
 export default function LandingPage() {
   const { data: session } = useSession();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  console.log('🚀 ~ LandingPage ~ session:', session);
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-vineyard-50 via-white to-vineyard-100'>
-      {/* Header */}
-      {/* <header className='border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50'>
-        <div className='container mx-auto px-4 py-4'>
-          <div className='flex justify-between items-center'>
-            <div className='flex items-center space-x-3'>
-              <Image
-                src='/vineyard.png'
-                alt='Vineyard Tour Planner'
-                width={60}
-                height={60}
-              />
-            </div>
-
-            
-            <div className='hidden md:flex items-center space-x-4'>
-              <Link href='/sign-up'>
-                <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-
-           
-            <div className='md:hidden'>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? (
-                  <X className='h-6 w-6' />
-                ) : (
-                  <Menu className='h-6 w-6' />
-                )}
-              </Button>
-            </div>
-          </div>
-
-      
-          {mobileMenuOpen && (
-            <div className='md:hidden mt-4 pb-4 border-t pt-4'>
-              <div className='flex flex-col space-y-2'>
-                {session ? (
-                  <>
-                    <Link
-                      href='/plans'
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button
-                        variant='outline'
-                        className='w-full border-vineyard-500 text-vineyard-700 hover:bg-vineyard-50'
-                      >
-                        View Plans
-                      </Button>
-                    </Link>
-                    <Link
-                      href='/explore'
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button className='w-full bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                        Explore Tours
-                        <ArrowRight className='w-4 h-4 ml-2' />
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href='/sign-in'>
-                      <Button variant='ghost' className='text-gray-700'>
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link href='/sign-up'>
-                      <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
-                        Get Started
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </header> */}
-
       {/* Hero Section */}
       <section className='container mx-auto px-4 py-16 lg:py-24 text-center'>
         <div className='max-w-4xl mx-auto'>

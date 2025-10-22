@@ -3,11 +3,42 @@ import { NextResponse } from "next/server"
 
 export default withAuth(
   function middleware(req) {
+    // Handle CORS for API routes
+    if (req.nextUrl.pathname.startsWith('/api/')) {
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        return new NextResponse(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Requested-With',
+            'Access-Control-Max-Age': '86400',
+          },
+        });
+      }
+
+      // Add CORS headers to API responses
+      const response = NextResponse.next();
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With');
+      
+      // Special handling for upload endpoint
+      if (req.nextUrl.pathname === '/api/admin/upload') {
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        response.headers.set('CF-Cache-Status', 'BYPASS');
+      }
+      
+      return response;
+    }
+    
     return NextResponse.next()
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        console.log('🚀 ~ token:', token)
         // Protect routes that need authentication
         const protectedPaths = [
           "/plans", 

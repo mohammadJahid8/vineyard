@@ -13,6 +13,7 @@ interface SimpleAccessGuardProps {
 
 export function SimpleAccessGuard({ children }: SimpleAccessGuardProps) {
   const { subscription } = useSimpleSubscription();
+  console.log('🚀 ~ SimpleAccessGuard ~ subscription:', subscription);
   const { data: session } = useSession();
   const router = useRouter();
 

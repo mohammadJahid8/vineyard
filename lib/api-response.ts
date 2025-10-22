@@ -44,7 +44,8 @@ export interface ApiResponse<T = any> {
 export function createSuccessResponse<T>(
   data: T,
   message: string = 'Success',
-  status: HttpStatus = HttpStatus.OK
+  status: HttpStatus = HttpStatus.OK,
+  headers?: Record<string, string>
 ): NextResponse<ApiResponse<T>> {
   return NextResponse.json(
     {
@@ -52,7 +53,7 @@ export function createSuccessResponse<T>(
       message,
       data,
     },
-    { status }
+    { status, headers }
   );
 }
 
@@ -63,7 +64,8 @@ export function createErrorResponse(
   type: ErrorType,
   message: string,
   status: HttpStatus,
-  details?: any
+  details?: any,
+  headers?: Record<string, string>
 ): NextResponse<ApiResponse> {
   return NextResponse.json(
     {
@@ -74,7 +76,7 @@ export function createErrorResponse(
         details,
       },
     },
-    { status }
+    { status, headers }
   );
 }
 
@@ -106,7 +108,7 @@ export function createPaginatedResponse<T>(
 /**
  * Handle API errors consistently
  */
-export function handleApiError(error: any): NextResponse<ApiResponse> {
+export function handleApiError(error: any, headers?: Record<string, string>): NextResponse<ApiResponse> {
   console.error('API Error:', error);
 
   // Handle specific error types
@@ -115,7 +117,8 @@ export function handleApiError(error: any): NextResponse<ApiResponse> {
       ErrorType.VALIDATION_ERROR,
       'Validation failed',
       HttpStatus.UNPROCESSABLE_ENTITY,
-      error.errors
+      error.errors,
+      headers
     );
   }
 
@@ -123,7 +126,9 @@ export function handleApiError(error: any): NextResponse<ApiResponse> {
     return createErrorResponse(
       ErrorType.VALIDATION_ERROR,
       'Invalid ID format',
-      HttpStatus.BAD_REQUEST
+      HttpStatus.BAD_REQUEST,
+      undefined,
+      headers
     );
   }
 
@@ -132,7 +137,8 @@ export function handleApiError(error: any): NextResponse<ApiResponse> {
       ErrorType.CONFLICT,
       'Resource already exists',
       HttpStatus.CONFLICT,
-      error.keyPattern
+      error.keyPattern,
+      headers
     );
   }
 
@@ -141,7 +147,9 @@ export function handleApiError(error: any): NextResponse<ApiResponse> {
     return createErrorResponse(
       ErrorType.DATABASE_ERROR,
       'Database connection failed',
-      HttpStatus.INTERNAL_SERVER_ERROR
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      headers
     );
   }
 
@@ -149,6 +157,8 @@ export function handleApiError(error: any): NextResponse<ApiResponse> {
   return createErrorResponse(
     ErrorType.INTERNAL_SERVER_ERROR,
     'An unexpected error occurred',
-    HttpStatus.INTERNAL_SERVER_ERROR
+    HttpStatus.INTERNAL_SERVER_ERROR,
+    undefined,
+    headers
   );
 }
