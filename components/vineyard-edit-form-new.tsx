@@ -143,7 +143,7 @@ export default function VineyardEditForm({
   const handleMapLinkChange = useCallback(
     (url: string) => {
       handleInputChange('maplink', url);
-      
+
       if (url) {
         const { latitude, longitude } = extractCoordinatesFromUrl(url);
         if (latitude !== undefined && longitude !== undefined) {
@@ -260,7 +260,9 @@ export default function VineyardEditForm({
               <Input
                 id='vineyard_id'
                 value={formData?.vineyard_id || ''}
-                onChange={(e) => handleInputChange('vineyard_id', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('vineyard_id', e.target.value)
+                }
                 placeholder='Enter unique vineyard ID'
                 required
               />
@@ -293,7 +295,9 @@ export default function VineyardEditForm({
               <Input
                 id='sub_region'
                 value={formData?.sub_region || ''}
-                onChange={(e) => handleInputChange('sub_region', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('sub_region', e.target.value)
+                }
                 placeholder='Enter sub region'
                 required
               />
@@ -333,7 +337,12 @@ export default function VineyardEditForm({
                 type='number'
                 step='any'
                 value={formData?.latitude || ''}
-                onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value) || undefined)}
+                onChange={(e) =>
+                  handleInputChange(
+                    'latitude',
+                    parseFloat(e.target.value) || undefined
+                  )
+                }
                 placeholder='e.g., 40.7128'
               />
             </div>
@@ -344,7 +353,12 @@ export default function VineyardEditForm({
                 type='number'
                 step='any'
                 value={formData?.longitude || ''}
-                onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value) || undefined)}
+                onChange={(e) =>
+                  handleInputChange(
+                    'longitude',
+                    parseFloat(e.target.value) || undefined
+                  )
+                }
                 placeholder='e.g., -74.0060'
               />
             </div>
@@ -371,7 +385,9 @@ export default function VineyardEditForm({
                 min='0'
                 max='5'
                 value={formData?.g || ''}
-                onChange={(e) => handleInputChange('g', parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange('g', parseFloat(e.target.value) || 0)
+                }
                 placeholder='e.g., 4.5'
                 required
               />
@@ -381,7 +397,9 @@ export default function VineyardEditForm({
               <Input
                 id='g_ratig_user'
                 value={formData?.g_ratig_user || ''}
-                onChange={(e) => handleInputChange('g_ratig_user', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('g_ratig_user', e.target.value)
+                }
                 placeholder='e.g., 1,234 reviews'
                 required
               />
@@ -390,27 +408,41 @@ export default function VineyardEditForm({
 
           <div className='grid gap-4 sm:grid-cols-2'>
             <div className='space-y-2'>
-              <Label htmlFor='lowest_cost_per_adult'>Lowest Cost per Adult *</Label>
+              <Label htmlFor='lowest_cost_per_adult'>
+                Lowest Cost per Adult *
+              </Label>
               <Input
                 id='lowest_cost_per_adult'
                 type='number'
                 step='0.01'
                 min='0'
                 value={formData?.lowest_cost_per_adult || ''}
-                onChange={(e) => handleInputChange('lowest_cost_per_adult', parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange(
+                    'lowest_cost_per_adult',
+                    parseFloat(e.target.value) || 0
+                  )
+                }
                 placeholder='e.g., 25.00'
                 required
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='highest_cost_per_adult'>Highest Cost per Adult *</Label>
+              <Label htmlFor='highest_cost_per_adult'>
+                Highest Cost per Adult *
+              </Label>
               <Input
                 id='highest_cost_per_adult'
                 type='number'
                 step='0.01'
                 min='0'
                 value={formData?.highest_cost_per_adult || ''}
-                onChange={(e) => handleInputChange('highest_cost_per_adult', parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange(
+                    'highest_cost_per_adult',
+                    parseFloat(e.target.value) || 0
+                  )
+                }
                 placeholder='e.g., 75.00'
                 required
               />
@@ -433,7 +465,9 @@ export default function VineyardEditForm({
               <Switch
                 id='tasting_only'
                 checked={formData?.tasting_only || false}
-                onCheckedChange={(checked) => handleInputChange('tasting_only', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange('tasting_only', checked)
+                }
               />
               <Label htmlFor='tasting_only'>Tasting Only</Label>
             </div>
@@ -441,7 +475,9 @@ export default function VineyardEditForm({
               <Switch
                 id='tour_and_tasting'
                 checked={formData?.tour_and_tasting || false}
-                onCheckedChange={(checked) => handleInputChange('tour_and_tasting', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange('tour_and_tasting', checked)
+                }
               />
               <Label htmlFor='tour_and_tasting'>Tour & Tasting</Label>
             </div>
@@ -449,7 +485,9 @@ export default function VineyardEditForm({
               <Switch
                 id='pairing_and_lunch'
                 checked={formData?.pairing_and_lunch || false}
-                onCheckedChange={(checked) => handleInputChange('pairing_and_lunch', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange('pairing_and_lunch', checked)
+                }
               />
               <Label htmlFor='pairing_and_lunch'>Pairing & Lunch</Label>
             </div>
@@ -457,7 +495,9 @@ export default function VineyardEditForm({
               <Switch
                 id='vine_experience'
                 checked={formData?.vine_experience || false}
-                onCheckedChange={(checked) => handleInputChange('vine_experience', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange('vine_experience', checked)
+                }
               />
               <Label htmlFor='vine_experience'>Vine Experience</Label>
             </div>
@@ -465,7 +505,9 @@ export default function VineyardEditForm({
               <Switch
                 id='masterclass_workshop'
                 checked={formData?.masterclass_workshop || false}
-                onCheckedChange={(checked) => handleInputChange('masterclass_workshop', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange('masterclass_workshop', checked)
+                }
               />
               <Label htmlFor='masterclass_workshop'>Masterclass Workshop</Label>
             </div>
@@ -487,8 +529,13 @@ export default function VineyardEditForm({
               <Label htmlFor={`reason_${num}`}>Reason {num}</Label>
               <Textarea
                 id={`reason_${num}`}
-                value={formData?.[`reason_${num}` as keyof Vineyard] as string || ''}
-                onChange={(e) => handleInputChange(`reason_${num}`, e.target.value)}
+                value={
+                  (formData?.[`reason_${num}` as keyof Vineyard] as string) ||
+                  ''
+                }
+                onChange={(e) =>
+                  handleInputChange(`reason_${num}`, e.target.value)
+                }
                 placeholder={`Enter reason ${num} to visit this vineyard`}
                 rows={2}
               />
@@ -502,9 +549,9 @@ export default function VineyardEditForm({
   const sidebar = (
     <>
       <ImageUploadSection
-        title="Vineyard Image"
-        description="Upload an image for the vineyard"
-        type="vineyard"
+        title='Vineyard Image'
+        description='Upload an image for the vineyard'
+        type='vineyard'
         currentImageUrl={formData?.image_url}
         latitude={formData?.latitude}
         longitude={formData?.longitude}
@@ -519,7 +566,7 @@ export default function VineyardEditForm({
 
       <FormActions
         isNew={isCreating}
-        entityType="vineyard"
+        entityType='vineyard'
         isCreating={createVineyardMutation.isPending}
         isUpdating={updateVineyardMutation.isPending}
         isUploading={isUploading}

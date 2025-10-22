@@ -217,8 +217,12 @@ export default function ExplorePage() {
     return trip.vineyards.some((v) => v.vineyard.vineyard_id === vineyardId);
   };
 
-  const hasVineyards =
-    filteredVineyards.length > 0 || trip.vineyards.length > 0;
+  console.log(
+    '🚀 ~ ExplorePage ~ filteredVineyards:',
+    filteredVineyards,
+    trip.vineyards
+  );
+  const hasVineyards = trip.vineyards.length > 0;
 
   return (
     <VineyardTourLayout currentStep='vineyard'>

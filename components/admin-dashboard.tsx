@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pagination } from '@/components/ui/pagination-controls';
+import { ImageViewer } from '@/components/ui/image-viewer';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -236,41 +237,6 @@ export function AdminDashboard() {
     }
   };
 
-  // Handle quick image upload for restaurant
-  const handleQuickRestaurantImageUpload = async (
-    file: File,
-    restaurantId: string
-  ) => {
-    if (!file) return;
-
-    try {
-      setUploading(restaurantId);
-
-      // Upload image to Cloudinary
-      const uploadResult = await uploadImageMutation.mutateAsync(file);
-
-      // Update restaurant with new image URL
-      const response = await fetch(`/api/admin/restaurants/${restaurantId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: uploadResult.imageUrl }),
-      });
-
-      if (response.ok) {
-        toast.success('Image updated successfully');
-        refetchRestaurants(); // Refetch the current page
-      } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to update restaurant');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      // Error toast is handled by the mutation
-    } finally {
-      setUploading(null);
-    }
-  };
-
   const isError = activeTab === 'vineyards' ? vineyardsError : restaurantsError;
   const error =
     activeTab === 'vineyards' ? vineyardsErrorData : restaurantsErrorData;
@@ -421,44 +387,17 @@ export function AdminDashboard() {
                                 className='hover:bg-gray-50'
                               >
                                 <TableCell>
-                                  <div className='relative w-16 h-12 bg-gray-100 rounded overflow-hidden group'>
-                                    <SmartImage
-                                      imageUrl={vineyard.image_url}
-                                      latitude={vineyard.latitude}
-                                      longitude={vineyard.longitude}
-                                      name={vineyard.vineyard}
-                                      type='vineyard'
-                                      alt={vineyard.vineyard}
-                                      className='object-cover'
-                                      fill
-                                      showFallbackText={false}
-                                    />
-                                    {/* Quick upload overlay */}
-                                    <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
-                                      <div className='relative'>
-                                        <input
-                                          type='file'
-                                          accept='image/*'
-                                          onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                              await handleQuickVineyardImageUpload(
-                                                file,
-                                                vineyard.id
-                                              );
-                                            }
-                                          }}
-                                          className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
-                                          disabled={uploading === vineyard.id}
-                                        />
-                                        {uploading === vineyard.id ? (
-                                          <Loader2 className='h-4 w-4 text-white animate-spin' />
-                                        ) : (
-                                          <Upload className='h-4 w-4 text-white' />
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
+                                  <ImageViewer
+                                    imageUrl={vineyard.image_url}
+                                    latitude={vineyard.latitude}
+                                    longitude={vineyard.longitude}
+                                    name={vineyard.vineyard}
+                                    type='vineyard'
+                                    alt={vineyard.vineyard}
+                                    className='object-cover'
+                                    showFallbackText={false}
+                                    triggerClassName='w-16 h-12 bg-gray-100 rounded overflow-hidden'
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   <div className='font-medium text-sm leading-tight'>
@@ -711,44 +650,17 @@ export function AdminDashboard() {
                                 className='hover:bg-gray-50'
                               >
                                 <TableCell>
-                                  <div className='relative w-16 h-12 bg-gray-100 rounded overflow-hidden group'>
-                                    <SmartImage
-                                      imageUrl={restaurant.image_url}
-                                      latitude={restaurant.latitude}
-                                      longitude={restaurant.longitude}
-                                      name={restaurant.restaurants}
-                                      type='restaurant'
-                                      alt={restaurant.restaurants}
-                                      className='object-cover'
-                                      fill
-                                      showFallbackText={false}
-                                    />
-                                    {/* Quick upload overlay */}
-                                    <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
-                                      <div className='relative'>
-                                        <input
-                                          type='file'
-                                          accept='image/*'
-                                          onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                              await handleQuickRestaurantImageUpload(
-                                                file,
-                                                restaurant.id
-                                              );
-                                            }
-                                          }}
-                                          className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
-                                          disabled={uploading === restaurant.id}
-                                        />
-                                        {uploading === restaurant.id ? (
-                                          <Loader2 className='h-4 w-4 text-white animate-spin' />
-                                        ) : (
-                                          <Upload className='h-4 w-4 text-white' />
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
+                                  <ImageViewer
+                                    imageUrl={restaurant.image_url}
+                                    latitude={restaurant.latitude}
+                                    longitude={restaurant.longitude}
+                                    name={restaurant.restaurants}
+                                    type='restaurant'
+                                    alt={restaurant.restaurants}
+                                    className='object-cover'
+                                    showFallbackText={false}
+                                    triggerClassName='w-16 h-12 bg-gray-100 rounded overflow-hidden'
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   <div className='font-medium text-sm leading-tight'>

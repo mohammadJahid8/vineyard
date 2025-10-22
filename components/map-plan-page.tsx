@@ -502,11 +502,11 @@ function SortableLocationItem({
                           </span>
                         </div>
                       )}
-                      {location.data.bracket && (
+                      {/* {location.data.bracket && (
                         <span className='bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-medium'>
                           {location.data.bracket} Bracket
                         </span>
-                      )}
+                      )} */}
                     </div>
 
                     {location.data.avg_est_lunch_cost && (
