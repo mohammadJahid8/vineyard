@@ -28,10 +28,10 @@ export default function LunchPage() {
     area: '',
     // type: '',
     cost: '',
-    rating: 'all',
+    // rating: 'all',
     search: '',
-    distance: '',
-    startingPoint: 'all',
+    // distance: '',
+    // startingPoint: 'all',
   });
 
   // Function to fetch restaurants from API with filters
@@ -51,20 +51,14 @@ export default function LunchPage() {
         if (filterParams.search && filterParams.search !== '') {
           params.set('search', filterParams.search);
         }
-        if (filterParams.rating && filterParams.rating !== 'all') {
-          // Convert rating filter to minRating
-          switch (filterParams.rating) {
-            case '4-plus':
-              params.set('minRating', '4.0');
-              break;
-            case '4.5-plus':
-              params.set('minRating', '4.5');
-              break;
-            case '3.5-plus':
-              params.set('minRating', '3.5');
-              break;
-          }
-        }
+        // if (filterParams.rating && filterParams.rating !== 'all') {
+        // Convert rating filter to minRating
+        //   switch (filterParams.rating) {
+        //     case '4-plus':
+        //       params.set('minRating', '4.0');
+        //       break;
+        //   }
+        // }
         if (filterParams.cost && filterParams.cost !== '') {
           // Convert cost filter to minCost/maxCost
           switch (filterParams.cost) {
@@ -108,10 +102,10 @@ export default function LunchPage() {
       area: searchParams.get('area') || '',
       // type: searchParams.get('type') || '',
       cost: searchParams.get('cost') || '',
-      rating: searchParams.get('rating') || 'all',
+      // rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
-      distance: '',
-      startingPoint: 'all',
+      // distance: '',
+      // startingPoint: 'all',
     };
     setFilters(urlFilters);
 
@@ -186,7 +180,7 @@ export default function LunchPage() {
     }
   };
 
-  console.log({ trip });
+  console.log({ paginatedRestaurants });
 
   return (
     <VineyardTourLayout
@@ -293,10 +287,10 @@ export default function LunchPage() {
                       area: '',
                       // type: '',
                       cost: '',
-                      rating: 'all',
+                      // rating: 'all',
                       search: '',
-                      distance: '',
-                      startingPoint: 'all',
+                      // distance: '',
+                      // startingPoint: 'all',
                     };
                     setFilters(clearedFilters);
                     setRestaurants([]);

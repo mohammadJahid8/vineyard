@@ -23,12 +23,12 @@ interface RestaurantFiltersProps {
   className?: string;
 }
 
-const typeOptions = [
-  { value: 'French', label: 'So French' },
-  { value: 'Brasserie', label: 'Brasserie' },
-  { value: 'Wine Bar', label: 'Wine Bar' },
-  { value: 'Seafood', label: 'Seafood' },
-];
+// const typeOptions = [
+//   { value: 'French', label: 'So French' },
+//   { value: 'Brasserie', label: 'Brasserie' },
+//   { value: 'Wine Bar', label: 'Wine Bar' },
+//   { value: 'Seafood', label: 'Seafood' },
+// ];
 
 const costOptions = [
   { value: 'under-25', label: 'Under €25' },
@@ -41,7 +41,7 @@ const locationOptions = [
   { value: 'reims city', label: 'Reims City' },
   { value: 'reims mountain', label: 'Reims Mountain' },
   { value: 'epernay city', label: 'Epernay City' },
-  { value: 'near epernay', label: 'Near Epernay' },
+  // { value: 'near epernay', label: 'Near Epernay' },
   { value: 'marne valley', label: 'Marne Valley' },
   { value: 'côte des blancs', label: 'Côte des Blancs' },
   { value: 'further south', label: 'Further South' },
@@ -58,12 +58,12 @@ export function RestaurantFilters({
   const getInitialFilters = (): RestaurantFilterState => {
     return {
       area: searchParams.get('area') || '',
-      // type: searchParams.get('type') || '',
-      cost: searchParams.get('cost') || '',
-      rating: searchParams.get('rating') || 'all',
       search: searchParams.get('search') || '',
-      distance: '',
-      startingPoint: 'all',
+      cost: searchParams.get('cost') || '',
+      // type: searchParams.get('type') || '',
+      // rating: searchParams.get('rating') || 'all',
+      // distance: '',
+      // startingPoint: 'all',
     };
   };
 
@@ -89,7 +89,7 @@ export function RestaurantFilters({
     if (newFilters.area !== '') params.set('area', newFilters.area);
     //  if (newFilters.type !== '') params.set('type', newFilters.type);
     if (newFilters.cost !== '') params.set('cost', newFilters.cost);
-    if (newFilters.rating !== 'all') params.set('rating', newFilters.rating);
+    // if (newFilters.rating !== 'all') params.set('rating', newFilters.rating);
     if (newFilters.search) params.set('search', newFilters.search);
 
     const paramString = params.toString();
@@ -172,10 +172,10 @@ export function RestaurantFilters({
       area: '',
       // type: '',
       cost: '',
-      rating: 'all',
       search: '',
-      distance: '',
-      startingPoint: 'all',
+      // rating: 'all',
+      // distance: '',
+      // startingPoint: 'all',
     };
     setAppliedFilters(clearedFilters);
     setTempFilters(clearedFilters);
@@ -188,7 +188,7 @@ export function RestaurantFilters({
     (appliedFilters.area && appliedFilters.area !== '') ||
     // (appliedFilters.type && appliedFilters.type !== '') ||
     (appliedFilters.cost && appliedFilters.cost !== '') ||
-    (appliedFilters.rating && appliedFilters.rating !== 'all') ||
+    // (appliedFilters.rating && appliedFilters.rating !== 'all') ||
     (appliedFilters.search && appliedFilters.search !== '');
 
   const hasUnappliedChanges = useMemo(
@@ -196,7 +196,7 @@ export function RestaurantFilters({
       tempFilters.area !== appliedFilters.area ||
       // tempFilters.type !== appliedFilters.type ||
       tempFilters.cost !== appliedFilters.cost ||
-      tempFilters.rating !== appliedFilters.rating ||
+      // tempFilters.rating !== appliedFilters.rating ||
       searchInput !== appliedFilters.search,
     [tempFilters, appliedFilters, searchInput]
   );
@@ -468,7 +468,7 @@ export function RestaurantFilters({
                 appliedFilters.area !== '' ? appliedFilters.area : null,
                 // appliedFilters.type !== '' ? appliedFilters.type : null,
                 appliedFilters.cost !== '' ? appliedFilters.cost : null,
-                appliedFilters.rating !== 'all' ? appliedFilters.rating : null,
+                // appliedFilters.rating !== 'all' ? appliedFilters.rating : null,
                 appliedFilters.search !== '' ? appliedFilters.search : null,
               ].filter(Boolean).length
             })`}

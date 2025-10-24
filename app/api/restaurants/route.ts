@@ -3,6 +3,14 @@ import connectDB from '@/lib/mongodb';
 import Restaurant from '@/lib/models/Restaurant';
 import { createSuccessResponse, createErrorResponse, handleApiError } from '@/lib/api-response';
 
+// Function to normalize text for accent-insensitive search
+function normalizeForSearch(text: string): string {
+  return text
+    .normalize('NFD') // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .toLowerCase();
+}
+
 export async function GET(request: NextRequest) {
   try {
     
@@ -20,8 +28,11 @@ export async function GET(request: NextRequest) {
     // Build query object
     const query: any = {};
 
+    // Handle region filtering with accent normalization
+    let regionFilter = null;
     if (region && region !== 'all') {
-      query.sub_region = { $regex: region, $options: 'i' };
+      const normalizedRegion = normalizeForSearch(region);
+      regionFilter = normalizedRegion;
     }
 
     if (type && type !== 'all') {
@@ -43,20 +54,55 @@ export async function GET(request: NextRequest) {
       query.g_rating = { $gte: parseFloat(minRating) };
     }
 
+    // Handle search with accent normalization
+    let searchFilter = null;
     if (search) {
+      const normalizedSearch = normalizeForSearch(search);
+      searchFilter = normalizedSearch;
+      // Keep the original regex search for non-accent sensitive fields
       query.$or = [
         { restaurants: { $regex: search, $options: 'i' } },
         { region: { $regex: search, $options: 'i' } },
-        { sub_region: { $regex: search, $options: 'i' } },
         { actual_type: { $regex: search, $options: 'i' } },
         { approx_google_type: { $regex: search, $options: 'i' } },
       ];
     }
     console.log({query})
 
-    const restaurants = await Restaurant.find(query).sort({ g_rating: -1 }).limit(5);
+    // Fetch restaurants from database
+    let restaurants = await Restaurant.find(query).sort({ g_rating: -1 });
 
-    return createSuccessResponse(restaurants, 'Restaurants fetched successfully');
+    // Apply accent-insensitive filtering for region and search
+    if (regionFilter || searchFilter) {
+      restaurants = restaurants.filter((restaurant: any) => {
+        let matchesRegion = true;
+        let matchesSearch = true;
+
+        // Check region filter with accent normalization
+        if (regionFilter && restaurant.sub_region) {
+          const normalizedSubRegion = normalizeForSearch(restaurant.sub_region);
+          matchesRegion = normalizedSubRegion.includes(regionFilter);
+        }
+
+        // Check search filter with accent normalization for sub_region
+        if (searchFilter && restaurant.sub_region) {
+          const normalizedSubRegion = normalizeForSearch(restaurant.sub_region);
+          const matchesSubRegion = normalizedSubRegion.includes(searchFilter);
+          
+          // If the original $or query didn't match but sub_region matches with normalization, include it
+          if (matchesSubRegion) {
+            matchesSearch = true;
+          }
+        }
+
+        return matchesRegion && matchesSearch;
+      });
+    }
+
+    // Limit results after filtering
+    const limitedRestaurants = restaurants.slice(0, 5);
+
+    return createSuccessResponse(limitedRestaurants, 'Restaurants fetched successfully');
   } catch (error) {
     console.error('Error fetching restaurants:', error);
     return handleApiError(error);

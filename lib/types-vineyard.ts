@@ -67,8 +67,8 @@ export interface RestaurantFilterState {
   area: string;
   // type: string;
   cost: string;
-  rating: string;
   search: string;
-  distance: string; // Kept for potential future use
-  startingPoint: string; // Kept for potential future use
+  // rating: string;
+  // distance: string; // Kept for potential future use
+  // startingPoint: string; // Kept for potential future use
 }

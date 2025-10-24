@@ -74,36 +74,45 @@ export default function SignInForm() {
         otp,
         redirect: false,
       });
+      console.log('🚀 ~ handleOTPSubmit ~ result:', result);
 
       if (result?.error) {
         setError('Invalid OTP. Please try again.');
       } else if (result?.ok) {
         // Get session to redirect properly
         const session = await getSession();
+        console.log('🚀 ~ handleOTPSubmit ~ session:', session);
         if (session) {
           // Check if user already has a plan before redirecting
           try {
             const planResponse = await fetch('/api/users/plan');
             if (planResponse.ok) {
               const planData = await planResponse.json();
+              console.log('🚀 ~ handleOTPSubmit ~ planData:', planData);
 
               // If user has never selected a plan, go to plans page
               if (
                 !planData.data.selectedPlan &&
                 !planData.data.planSelectedAt
               ) {
+                console.log('🚀 ~ handleOTPSubmit ~ going to plans');
                 router.push('/plans');
               } else {
                 // User has already selected a plan (active or expired), go to explore
+                console.log('🚀 ~ handleOTPSubmit ~ going to explore');
                 router.push('/explore');
               }
             } else {
+              console.log(
+                '🚀 ~ handleOTPSubmit ~ planResponse not ok:',
+                planResponse
+              );
               // If can't check plan status, default to explore
-              router.push('/explore');
+              // router.push('/explore');
             }
           } catch (error) {
             console.error('Error checking plan status:', error);
-            router.push('/explore');
+            // router.push('/explore');
           }
           router.refresh();
         }
