@@ -100,9 +100,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Limit results after filtering
-    const limitedRestaurants = restaurants.slice(0, 5);
+    // const limitedRestaurants = restaurants.slice(0, 5);
 
-    return createSuccessResponse(limitedRestaurants, 'Restaurants fetched successfully');
+    return createSuccessResponse(restaurants, 'Restaurants fetched successfully');
   } catch (error) {
     console.error('Error fetching restaurants:', error);
     return handleApiError(error);

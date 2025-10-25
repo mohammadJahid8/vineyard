@@ -104,9 +104,9 @@ export function BottomNavigation() {
               )}
             >
               <Icon
-                className={cn('h-5 w-5', {
+                className={cn('h-5 md:h-7 w-5 md:w-7', {
                   'text-vineyard-600': active,
-                  'text-gray-400': !active,
+                  'text-black': !active,
                   'text-gray-300 pointer-events-none': isDisabled,
                 })}
               />
