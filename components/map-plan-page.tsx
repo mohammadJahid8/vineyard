@@ -54,6 +54,7 @@ import Link from 'next/link';
 import VineyardTourLayout from '@/components/layouts/vineyard-tour-layout';
 import { SimpleAccessGuard } from '@/components/simple-access-guard';
 import { useSimpleSubscription } from '@/lib/context/simple-subscription-context';
+import { useTrip } from '@/lib/context/trip-context';
 import { cn } from '@/lib/utils';
 
 declare global {
@@ -67,7 +68,7 @@ interface ConfirmedPlan {
   id: string;
   title: string;
   vineyards: any[];
-  restaurant?: any;
+  restaurants?: any[];
   status: string;
   confirmedAt: string;
   expiresAt: string;
@@ -314,6 +315,7 @@ function SortableLocationItem({
                   onReplaceLunch();
                 }}
                 className='h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                title='Manage restaurants'
               >
                 <ArrowLeftRight className='h-4 w-4' />
               </Button>
@@ -576,6 +578,7 @@ export default function MapViewPage() {
     legs: Array<{ distance: string; duration: string }>;
   } | null>(null);
   const { subscription } = useSimpleSubscription();
+  const { removeVineyard, removeRestaurant } = useTrip();
   // console.log('🚀 ~ MapViewPage ~ subscription:', subscription);
   const [sortedLocations, setSortedLocations] = useState<LocationItem[]>([]);
   const [collapsedItems, setCollapsedItems] = useState<Set<string>>(new Set());
@@ -675,12 +678,18 @@ export default function MapViewPage() {
       console.error('Error updating time:', error);
       // Revert local state on error
       if (plan) {
-        const originalLocation = [...plan.vineyards, plan.restaurant].find(
-          (item) =>
-            (item.vineyard &&
-              `vineyard-${plan.vineyards.indexOf(item)}` === locationId) ||
-            (item.restaurant && `restaurant-0` === locationId)
-        );
+        const allItems = [...plan.vineyards, ...(plan.restaurants || [])];
+        const originalLocation = allItems.find((item) => {
+          if (item.vineyard) {
+            return `vineyard-${plan.vineyards.indexOf(item)}` === locationId;
+          }
+          if (item.restaurant && plan.restaurants) {
+            return (
+              `restaurant-${plan.restaurants.indexOf(item)}` === locationId
+            );
+          }
+          return false;
+        });
         if (originalLocation) {
           setSortedLocations((prev) =>
             prev.map((loc) =>
@@ -741,6 +750,24 @@ export default function MapViewPage() {
       if (data.plan) {
         setPlan(data.plan);
       }
+
+      // Also remove from trip context to keep it in sync
+      const location = sortedLocations.find((loc) => loc.id === locationId);
+      if (location) {
+        if (location.type === 'vineyard') {
+          // Extract vineyard_id from the data
+          const vineyardId = location.data.vineyard_id;
+          if (vineyardId) {
+            await removeVineyard(vineyardId);
+          }
+        } else if (location.type === 'restaurant') {
+          // Extract restaurant id from the data
+          const restaurantId = location.data.id;
+          if (restaurantId) {
+            await removeRestaurant(restaurantId);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error removing item:', error);
       alert(error instanceof Error ? error.message : 'Failed to remove item');
@@ -770,21 +797,25 @@ export default function MapViewPage() {
           }
         });
 
-        // Add restaurant if exists
-        if (
-          plan.restaurant?.restaurant?.latitude &&
-          plan.restaurant?.restaurant?.longitude
-        ) {
-          allLocations.push({
-            id: 'restaurant-0',
-            type: 'restaurant',
-            name:
-              plan.restaurant.restaurant.restaurants ||
-              plan.restaurant.restaurant.name,
-            lat: plan.restaurant.restaurant.latitude,
-            lng: plan.restaurant.restaurant.longitude,
-            time: plan.restaurant.time || '',
-            data: plan.restaurant.restaurant,
+        // Add restaurants if exist
+        if (plan.restaurants && Array.isArray(plan.restaurants)) {
+          plan.restaurants.forEach((planRestaurant, index) => {
+            if (
+              planRestaurant.restaurant?.latitude &&
+              planRestaurant.restaurant?.longitude
+            ) {
+              allLocations.push({
+                id: `restaurant-${index}`,
+                type: 'restaurant',
+                name:
+                  planRestaurant.restaurant.restaurants ||
+                  planRestaurant.restaurant.name,
+                lat: planRestaurant.restaurant.latitude,
+                lng: planRestaurant.restaurant.longitude,
+                time: planRestaurant.time || '',
+                data: planRestaurant.restaurant,
+              });
+            }
           });
         }
 
@@ -1195,21 +1226,25 @@ export default function MapViewPage() {
       }
     });
 
-    // Add restaurant if exists
-    if (
-      plan.restaurant?.restaurant?.latitude &&
-      plan.restaurant?.restaurant?.longitude
-    ) {
-      allLocations.push({
-        id: 'restaurant-0',
-        type: 'restaurant',
-        name:
-          plan.restaurant.restaurant.restaurants ||
-          plan.restaurant.restaurant.name,
-        lat: plan.restaurant.restaurant.latitude,
-        lng: plan.restaurant.restaurant.longitude,
-        time: plan.restaurant.time || '',
-        data: plan.restaurant.restaurant,
+    // Add restaurants if exist
+    if (plan.restaurants && Array.isArray(plan.restaurants)) {
+      plan.restaurants.forEach((planRestaurant, index) => {
+        if (
+          planRestaurant.restaurant?.latitude &&
+          planRestaurant.restaurant?.longitude
+        ) {
+          allLocations.push({
+            id: `restaurant-${index}`,
+            type: 'restaurant',
+            name:
+              planRestaurant.restaurant.restaurants ||
+              planRestaurant.restaurant.name,
+            lat: planRestaurant.restaurant.latitude,
+            lng: planRestaurant.restaurant.longitude,
+            time: planRestaurant.time || '',
+            data: planRestaurant.restaurant,
+          });
+        }
       });
     }
 
@@ -1548,9 +1583,22 @@ export default function MapViewPage() {
                 onClick={handleAddVineyard}
                 variant='outline'
                 size='sm'
-                className='w-full mb-4 text-sm border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
+                className='w-full mb-2 text-sm border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
               >
                 + Add Another Vineyard
+              </Button>
+            )}
+
+            {/* Add restaurant button */}
+            {sortedLocations.filter((loc) => loc.type === 'restaurant').length <
+              3 && (
+              <Button
+                onClick={handleReplaceLunch}
+                variant='outline'
+                size='sm'
+                className='w-full mb-4 text-sm border-dashed border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400'
+              >
+                + Add Another Restaurant
               </Button>
             )}
 

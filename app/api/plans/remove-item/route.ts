@@ -55,11 +55,30 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid vineyard index' }, { status: 400 });
       }
     } else if (locationId.startsWith('restaurant-')) {
-      plan.restaurant = undefined;
-      
-      // Update custom order to remove the restaurant
-      if (plan.customOrder && Array.isArray(plan.customOrder)) {
-        plan.customOrder = plan.customOrder.filter((item: any) => item.id !== locationId);
+      const index = parseInt(locationId.split('-')[1]);
+      if (index >= 0 && index < plan.restaurants.length) {
+        plan.restaurants.splice(index, 1);
+        
+        // Update custom order to remove the deleted item and adjust indices
+        if (plan.customOrder && Array.isArray(plan.customOrder)) {
+          plan.customOrder = plan.customOrder
+            .filter((item: any) => item.id !== locationId)
+            .map((item: any) => {
+              // Adjust restaurant indices that are greater than the removed index
+              if (item.id.startsWith('restaurant-')) {
+                const itemIndex = parseInt(item.id.split('-')[1]);
+                if (itemIndex > index) {
+                  return {
+                    ...item,
+                    id: `restaurant-${itemIndex - 1}`,
+                  };
+                }
+              }
+              return item;
+            });
+        }
+      } else {
+        return NextResponse.json({ error: 'Invalid restaurant index' }, { status: 400 });
       }
     } else {
       return NextResponse.json({ error: 'Invalid location ID' }, { status: 400 });

@@ -23,6 +23,9 @@ export default function ExplorePage() {
   const MAX_VINEYARDS = 10;
 
   const [vineyards, setVineyards] = useState<Vineyard[]>([]);
+  const [additionalVineyards, setAdditionalVineyards] = useState<Vineyard[]>(
+    []
+  );
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -79,10 +82,20 @@ export default function ExplorePage() {
 
       const result = await response.json();
       console.log('🚀 ~ ExplorePage ~ result:', result);
-      setVineyards(result.data || []);
+
+      // Handle new response structure
+      if (result.data.vineyards) {
+        setVineyards(result.data.vineyards || []);
+        setAdditionalVineyards(result.data.additionalRecommendations || []);
+      } else {
+        // Fallback for old API response format
+        setVineyards(result.data || []);
+        setAdditionalVineyards([]);
+      }
     } catch (error) {
       console.error('Error fetching vineyards:', error);
       setVineyards([]);
+      setAdditionalVineyards([]);
     } finally {
       setLoading(false);
     }
@@ -193,7 +206,12 @@ export default function ExplorePage() {
 
   // Trip management
   const handleAddToTrip = async (vineyardId: string, offerId?: string) => {
-    const vineyard = vineyards.find((v) => v.vineyard_id === vineyardId);
+    // Check both main vineyards and additional vineyards
+    let vineyard = vineyards.find((v) => v.vineyard_id === vineyardId);
+    if (!vineyard) {
+      vineyard = additionalVineyards.find((v) => v.vineyard_id === vineyardId);
+    }
+
     const offer = offerId
       ? offers.find((o) => o.vineyard_id === vineyardId)
       : undefined;
@@ -342,6 +360,52 @@ export default function ExplorePage() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Additional Recommendations Section */}
+      {additionalVineyards.length > 0 && filteredVineyards.length < 3 && (
+        <div className='container mx-auto px-4 py-8' id='additional-vineyards'>
+          <div className='mb-6'>
+            <p className=''>
+              Here are {additionalVineyards.length} additional options which are
+              close to your request
+            </p>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+            {additionalVineyards.map((vineyard) => {
+              const isSelected = trip.vineyards.some(
+                (v) => v.vineyard.vineyard_id === vineyard.vineyard_id
+              );
+              return (
+                <div
+                  key={vineyard.vineyard_id}
+                  className='relative opacity-90 hover:opacity-100 transition-opacity'
+                >
+                  {isSelected && (
+                    <div className='absolute -top-2 -left-2 z-10'>
+                      <div className='bg-vineyard-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm'>
+                        Selected
+                      </div>
+                    </div>
+                  )}
+                  <VineyardCard
+                    vineyard={vineyard}
+                    offers={getVineyardOffers(vineyard.vineyard_id)}
+                    onAddToTrip={handleAddToTrip}
+                    onRemoveFromTrip={handleRemoveFromTrip}
+                    isInTrip={isSelected}
+                    className={
+                      isSelected
+                        ? 'border-2 border-vineyard-200 bg-gradient-to-br from-vineyard-50 to-white'
+                        : 'border-gray-300'
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

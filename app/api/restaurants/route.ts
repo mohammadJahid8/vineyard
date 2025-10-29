@@ -99,10 +99,123 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Limit results after filtering
-    // const limitedRestaurants = restaurants.slice(0, 5);
+    // If results are less than 3 (including zero), fetch additional recommendations
+    let additionalRecommendations = [];
+    if (restaurants.length < 3) {
+      // Build alternative query
+      const altQuery: any = {};
 
-    return createSuccessResponse(restaurants, 'Restaurants fetched successfully');
+      if (restaurants.length > 0) {
+        // If we have at least one result, use it as reference
+        const referenceRestaurant = restaurants[0];
+        altQuery._id = { $nin: restaurants.map((r: any) => r._id) };
+
+        // Try to match region first
+        if (referenceRestaurant.sub_region) {
+          const normalizedSubRegion = normalizeForSearch(referenceRestaurant.sub_region);
+          
+          // Fetch restaurants from same region
+          let sameRegionRestaurants = await Restaurant.find(altQuery)
+            .sort({ g_rating: -1 })
+            .limit(6);
+          
+          // Filter by normalized sub_region
+          sameRegionRestaurants = sameRegionRestaurants.filter((r: any) => {
+            if (r.sub_region) {
+              const normalizedR = normalizeForSearch(r.sub_region);
+              return normalizedR.includes(normalizedSubRegion) || normalizedSubRegion.includes(normalizedR);
+            }
+            return false;
+          });
+
+          if (sameRegionRestaurants.length >= 6) {
+            additionalRecommendations = sameRegionRestaurants;
+          } else {
+            // If not enough from same region, add by similar cost
+            const remainingCount = 6 - sameRegionRestaurants.length;
+            const refCost = referenceRestaurant.avg_est_lunch_cost || 50;
+            
+            const costQuery: any = {
+              _id: { 
+                $nin: [
+                  ...restaurants.map((r: any) => r._id),
+                  ...sameRegionRestaurants.map((r: any) => r._id)
+                ]
+              },
+              avg_est_lunch_cost: {
+                $gte: Math.max(0, refCost - 15),
+                $lte: refCost + 15
+              }
+            };
+
+            const similarCostRestaurants = await Restaurant.find(costQuery)
+              .sort({ g_rating: -1 })
+              .limit(remainingCount);
+
+            additionalRecommendations = [...sameRegionRestaurants, ...similarCostRestaurants];
+          }
+        } else {
+          // Fallback: just get by similar cost
+          const refCost = referenceRestaurant.avg_est_lunch_cost || 50;
+          altQuery.avg_est_lunch_cost = {
+            $gte: Math.max(0, refCost - 15),
+            $lte: refCost + 15
+          };
+
+          additionalRecommendations = await Restaurant.find(altQuery)
+            .sort({ g_rating: -1 })
+            .limit(6);
+        }
+      } else {
+        // No results found, show general recommendations based on filters
+        // Use region filter if available
+        if (regionFilter) {
+          // Fetch restaurants with accent-insensitive filtering
+          let allRestaurants = await Restaurant.find()
+            .sort({ g_rating: -1 })
+            .limit(20); // Get more than needed for filtering
+          
+          additionalRecommendations = allRestaurants.filter((r: any) => {
+            if (r.sub_region) {
+              const normalizedSubRegion = normalizeForSearch(r.sub_region);
+              return normalizedSubRegion.includes(regionFilter);
+            }
+            return false;
+          }).slice(0, 6);
+        }
+        
+        // If no region recommendations or not enough, use cost filter
+        if (additionalRecommendations.length < 6) {
+          const remainingCount = 6 - additionalRecommendations.length;
+          const excludeIds = additionalRecommendations.map((r: any) => r._id);
+          
+          const costQuery: any = {
+            _id: { $nin: excludeIds }
+          };
+          
+          if (minCost || maxCost) {
+            costQuery.avg_est_lunch_cost = {};
+            if (minCost) {
+              costQuery.avg_est_lunch_cost.$gte = parseFloat(minCost);
+            }
+            if (maxCost) {
+              costQuery.avg_est_lunch_cost.$lte = parseFloat(maxCost);
+            }
+          }
+
+          const moreCostRestaurants = await Restaurant.find(costQuery)
+            .sort({ g_rating: -1 })
+            .limit(remainingCount);
+
+          additionalRecommendations = [...additionalRecommendations, ...moreCostRestaurants];
+        }
+      }
+    }
+
+    return createSuccessResponse({
+      restaurants,
+      additionalRecommendations: additionalRecommendations.length > 0 ? additionalRecommendations : undefined
+    }, 'Restaurants fetched successfully');
   } catch (error) {
     console.error('Error fetching restaurants:', error);
     return handleApiError(error);

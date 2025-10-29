@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { vineyards, restaurant, title } = await request.json();
+    const { vineyards, restaurants, title } = await request.json();
 
     // if (!vineyards || !Array.isArray(vineyards) || vineyards.length === 0) {
     //   return createErrorResponse(
@@ -81,6 +81,14 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(
         ErrorType.VALIDATION_ERROR,
         'Maximum 10 vineyards allowed',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if (restaurants && restaurants.length > 3) {
+      return createErrorResponse(
+        ErrorType.VALIDATION_ERROR,
+        'Maximum 3 restaurants allowed',
         HttpStatus.BAD_REQUEST
       );
     }
@@ -107,14 +115,14 @@ export async function POST(request: NextRequest) {
         time: v.time,
       }));
       
-      if (restaurant) {
-        plan.restaurant = {
-          restaurantId: restaurant.restaurant.restaurant_id || restaurant.restaurant.restaurants,
-          restaurant: restaurant.restaurant,
-          time: restaurant.time,
-        };
+      if (restaurants && Array.isArray(restaurants)) {
+        plan.restaurants = restaurants.map((r: any) => ({
+          restaurantId: r.restaurant.id,
+          restaurant: r.restaurant,
+          time: r.time,
+        }));
       } else {
-        plan.restaurant = undefined;
+        plan.restaurants = [];
       }
       
       if (title) {
@@ -134,17 +142,16 @@ export async function POST(request: NextRequest) {
           offer: v.offer,
           time: v.time,
         })),
+        restaurants: restaurants && Array.isArray(restaurants) 
+          ? restaurants.map((r: any) => ({
+              restaurantId: r.restaurant.id,
+              restaurant: r.restaurant,
+              time: r.time,
+            }))
+          : [],
         customOrder: []
         
       };
-
-      if (restaurant) {
-        planData.restaurant = {
-          restaurantId: restaurant.restaurant.restaurant_id || restaurant.restaurant.restaurants,
-          restaurant: restaurant.restaurant,
-          time: restaurant.time,
-        };
-      }
 
       if (title) {
         planData.title = title;

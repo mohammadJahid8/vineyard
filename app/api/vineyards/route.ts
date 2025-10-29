@@ -85,11 +85,67 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🚀 ~ GET ~ vineyards query:', JSON.stringify(query, null, 2))
-    // const vineyards = await Vineyard.find(query).sort({ g: -1 }).limit(10);
     const vineyards = await Vineyard.find(query).sort({ g: -1 });
     console.log('🚀 ~ GET ~ vineyards:', vineyards)
 
-    return createSuccessResponse(vineyards, 'Vineyards fetched successfully');
+    // If results are less than 3 (including zero), fetch additional recommendations
+    let additionalRecommendations = [];
+    if (vineyards.length < 3) {
+      // Build alternative query - relax some constraints
+      const altQuery: any = {};
+
+      if (vineyards.length > 0) {
+        // If we have at least one result, use it as reference
+        const referenceVineyard = vineyards[0];
+        altQuery.vineyard_id = { $nin: vineyards.map((v: any) => v.vineyard_id) };
+
+        // Keep region if it was specified
+        if (region && region !== 'all') {
+          altQuery.sub_region = { $regex: region, $options: 'i' };
+        }
+
+        // Relax cost constraint slightly (±20 from reference)
+        if (referenceVineyard.lowest_cost_per_adult) {
+          const refCost = referenceVineyard.lowest_cost_per_adult;
+          altQuery.lowest_cost_per_adult = {
+            $gte: Math.max(0, refCost - 20),
+            $lte: refCost + 20
+          };
+        }
+      } else {
+        // No results found, show general recommendations based on filters
+        // Keep region if specified
+        if (region && region !== 'all') {
+          altQuery.sub_region = { $regex: region, $options: 'i' };
+        }
+        
+        // Use original cost range if specified
+        if (minCost || maxCost) {
+          altQuery.lowest_cost_per_adult = {};
+          if (minCost) {
+            altQuery.lowest_cost_per_adult.$gte = parseFloat(minCost);
+          }
+          if (maxCost) {
+            altQuery.lowest_cost_per_adult.$lte = parseFloat(maxCost);
+          }
+        }
+        
+        // If still no constraints, just get top rated
+        if (Object.keys(altQuery).length === 0) {
+          // Get top rated vineyards
+        }
+      }
+
+      // Get additional options
+      additionalRecommendations = await Vineyard.find(altQuery)
+        .sort({ g: -1 })
+        .limit(6);
+    }
+
+    return createSuccessResponse({
+      vineyards,
+      additionalRecommendations: additionalRecommendations.length > 0 ? additionalRecommendations : undefined
+    }, 'Vineyards fetched successfully');
   } catch (error) {
     console.error('Error fetching vineyards:', error);
     return handleApiError(error);

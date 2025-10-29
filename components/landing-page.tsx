@@ -27,7 +27,7 @@ export default function LandingPage() {
           <h2 className='text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6'>
             Plan a Perfect
             <br />
-            <span className='text-vineyard-500'>Vineyard Trip</span>
+            <span className='text-vineyard-500'>Champagne Trip</span>
           </h2>
           <p className='text-lg md:text-xl text-vineyard-600 font-medium mb-2'>
             Spend minutes, not hours.
@@ -49,7 +49,7 @@ export default function LandingPage() {
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center mb-12'>
             <Link href={session ? '/explore' : '/sign-up'}>
-              <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white'>
+              <Button className='bg-vineyard-500 hover:bg-vineyard-600 text-white px-8 py-6 text-lg'>
                 Get Started
               </Button>
             </Link>

@@ -24,17 +24,17 @@ export interface TripRestaurant {
 
 export interface TripState {
   vineyards: TripVineyard[];
-  restaurant: TripRestaurant | null;
+  restaurants: TripRestaurant[];
 }
 
 interface TripContextType {
   trip: TripState;
   addVineyard: (vineyard: Vineyard, offer?: Offer) => Promise<boolean>; // Returns false if limit reached
-  addRestaurant: (restaurant: Restaurant) => Promise<void>;
+  addRestaurant: (restaurant: Restaurant) => Promise<boolean>; // Returns false if limit reached
   removeVineyard: (vineyardId: string) => Promise<void>;
-  removeRestaurant: () => Promise<void>;
+  removeRestaurant: (restaurantId: string) => Promise<void>;
   updateVineyardTime: (vineyardId: string, time: string) => Promise<void>;
-  updateRestaurantTime: (time: string) => Promise<void>;
+  updateRestaurantTime: (restaurantId: string, time: string) => Promise<void>;
   updateVineyardOrder: (newOrder: TripVineyard[]) => Promise<void>;
   clearTrip: () => void;
   // savePlan: () => Promise<void>;
@@ -47,17 +47,18 @@ interface TripContextType {
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
 const MAX_VINEYARDS = 10;
+const MAX_RESTAURANTS = 3;
 
 export function TripProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const [trip, setTrip] = useState<TripState>({
     vineyards: [],
-    restaurant: null,
+    restaurants: [],
   });
   const [planId, setPlanId] = useState<string | null>(null);
   const [savedState, setSavedState] = useState<TripState>({
     vineyards: [],
-    restaurant: null,
+    restaurants: [],
   });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -67,7 +68,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
       if (
         session?.user?.id &&
         trip.vineyards.length === 0 &&
-        !trip.restaurant
+        trip.restaurants.length === 0
       ) {
         try {
           await loadPlan();
@@ -118,9 +119,22 @@ export function TripProvider({ children }: { children: ReactNode }) {
   };
 
   const addRestaurant = async (restaurant: Restaurant) => {
+    if (trip.restaurants.length >= MAX_RESTAURANTS) {
+      return false; // Cannot add more restaurants
+    }
+
+    // Check if restaurant is already added
+    const isAlreadyAdded = trip.restaurants.some(
+      (r) => r.restaurant.id === restaurant.id
+    );
+
+    if (isAlreadyAdded) {
+      return false; // Restaurant already added
+    }
+
     const newTrip = {
       ...trip,
-      restaurant: { restaurant },
+      restaurants: [...trip.restaurants, { restaurant }],
     };
 
     setTrip(newTrip);
@@ -133,6 +147,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
         console.error('Error saving plan after adding restaurant:', error);
       }
     }
+
+    return true;
   };
 
   const removeVineyard = async (vineyardId: string) => {
@@ -156,10 +172,12 @@ export function TripProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const removeRestaurant = async () => {
+  const removeRestaurant = async (restaurantId: string) => {
     const newTrip = {
       ...trip,
-      restaurant: null,
+      restaurants: trip.restaurants.filter(
+        (r) => r.restaurant.id !== restaurantId
+      ),
     };
 
     setTrip(newTrip);
@@ -194,10 +212,12 @@ export function TripProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateRestaurantTime = async (time: string) => {
+  const updateRestaurantTime = async (restaurantId: string, time: string) => {
     const newTrip = {
       ...trip,
-      restaurant: trip.restaurant ? { ...trip.restaurant, time } : null,
+      restaurants: trip.restaurants.map((r) =>
+        r.restaurant.id === restaurantId ? { ...r, time } : r
+      ),
     };
 
     setTrip(newTrip);
@@ -239,11 +259,11 @@ export function TripProvider({ children }: { children: ReactNode }) {
   const clearTrip = () => {
     setTrip({
       vineyards: [],
-      restaurant: null,
+      restaurants: [],
     });
     setSavedState({
       vineyards: [],
-      restaurant: null,
+      restaurants: [],
     });
     setPlanId(null);
     setHasUnsavedChanges(false);
@@ -267,7 +287,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify({
           vineyards: tripState.vineyards,
-          restaurant: tripState.restaurant,
+          restaurants: tripState.restaurants,
         }),
       });
 
@@ -278,7 +298,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
         // Update saved state to reflect the saved state
         setSavedState({
           vineyards: [...tripState.vineyards],
-          restaurant: tripState.restaurant ? { ...tripState.restaurant } : null,
+          restaurants: [...tripState.restaurants],
         });
         setHasUnsavedChanges(false);
       } else {
@@ -310,23 +330,23 @@ export function TripProvider({ children }: { children: ReactNode }) {
           time: v.time,
         }));
 
-        const restaurant = plan.restaurant
-          ? {
-              restaurant: plan.restaurant.restaurant,
-              time: plan.restaurant.time,
-            }
-          : null;
+        const restaurants = plan.restaurants
+          ? plan.restaurants.map((r: any) => ({
+              restaurant: r.restaurant,
+              time: r.time,
+            }))
+          : [];
 
         setTrip({
           vineyards,
-          restaurant,
+          restaurants,
         });
 
         if (plan) {
           // Draft plan - set as saved state
           setSavedState({
             vineyards: [...vineyards],
-            restaurant: restaurant ? { ...restaurant } : null,
+            restaurants: [...restaurants],
           });
           setPlanId(plan.id);
           setHasUnsavedChanges(false);
@@ -334,7 +354,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
           // Confirmed plan - load data but mark as unsaved to allow updates
           setSavedState({
             vineyards: [],
-            restaurant: null,
+            restaurants: [],
           });
           setPlanId(null); // No draft plan ID yet
           setHasUnsavedChanges(true);

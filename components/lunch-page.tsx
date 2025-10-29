@@ -21,8 +21,12 @@ export default function LunchPage() {
   const router = useRouter();
   const currentPage = parseInt(searchParams.get('page') || '1');
   const { trip, addRestaurant, removeRestaurant } = useTrip();
+  const MAX_RESTAURANTS = 3;
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [additionalRestaurants, setAdditionalRestaurants] = useState<
+    Restaurant[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<RestaurantFilterState>({
     area: '',
@@ -85,10 +89,20 @@ export default function LunchPage() {
         }
 
         const result = await response.json();
-        setRestaurants(result.data || []);
+
+        // Handle new response structure
+        if (result.data.restaurants) {
+          setRestaurants(result.data.restaurants || []);
+          setAdditionalRestaurants(result.data.additionalRecommendations || []);
+        } else {
+          // Fallback for old API response format
+          setRestaurants(result.data || []);
+          setAdditionalRestaurants([]);
+        }
       } catch (error) {
         console.error('Error fetching restaurants:', error);
         setRestaurants([]);
+        setAdditionalRestaurants([]);
       } finally {
         setLoading(false);
       }
@@ -132,28 +146,27 @@ export default function LunchPage() {
   // Use restaurants directly from API (already filtered on server)
   const filteredRestaurants = hasAllRequiredFilters ? restaurants : [];
 
-  // Combine selected restaurant with search results, showing selected one first
+  // Combine selected restaurants with search results, showing selected ones first
   const combinedRestaurants = useMemo(() => {
-    if (!hasAllRequiredFilters && !trip.restaurant) {
+    if (!hasAllRequiredFilters && trip.restaurants.length === 0) {
       return [];
     }
 
-    const selectedRestaurants = trip.restaurant
-      ? [
-          {
-            ...trip.restaurant.restaurant,
-            isSelected: true,
-          },
-        ]
-      : [];
+    const selectedRestaurantIds = new Set(
+      trip.restaurants.map((tr) => tr.restaurant.id)
+    );
+    const selectedRestaurants = trip.restaurants.map((tr) => ({
+      ...tr.restaurant,
+      isSelected: true,
+    }));
 
     // Get non-selected restaurants from search results
     const nonSelectedRestaurants = filteredRestaurants
-      .filter((r) => r.id !== trip.restaurant?.restaurant.id)
+      .filter((r) => !selectedRestaurantIds.has(r.id))
       .map((r) => ({ ...r, isSelected: false }));
 
     return [...selectedRestaurants, ...nonSelectedRestaurants];
-  }, [filteredRestaurants, trip.restaurant, hasAllRequiredFilters]);
+  }, [filteredRestaurants, trip.restaurants, hasAllRequiredFilters]);
 
   // Pagination - apply to combined results
   const totalPages = Math.ceil(combinedRestaurants.length / ITEMS_PER_PAGE);
@@ -164,20 +177,25 @@ export default function LunchPage() {
   );
 
   // Trip management
-  const handleAddToTrip = (restaurantId: string) => {
-    const restaurant = restaurants.find((r) => r.id === restaurantId);
+  const handleAddToTrip = async (restaurantId: string) => {
+    // Check both main restaurants and additional restaurants
+    let restaurant = restaurants.find((r) => r.id === restaurantId);
+    if (!restaurant) {
+      restaurant = additionalRestaurants.find((r) => r.id === restaurantId);
+    }
 
     if (restaurant) {
-      addRestaurant(restaurant);
-      // Navigate to plan page to show the added restaurant
-      // router.push('/explore/trip');
+      const success = await addRestaurant(restaurant);
+      if (!success) {
+        alert(
+          `You can only add up to ${MAX_RESTAURANTS} restaurants or this restaurant is already added.`
+        );
+      }
     }
   };
 
   const handleRemoveFromTrip = (restaurantId: string) => {
-    if (trip.restaurant?.restaurant.id === restaurantId) {
-      removeRestaurant();
-    }
+    removeRestaurant(restaurantId);
   };
 
   console.log({ paginatedRestaurants });
@@ -198,24 +216,29 @@ export default function LunchPage() {
       </div>
 
       {/* Results Header */}
-      {/* {(combinedRestaurants.length > 0 || trip.restaurant) && ( */}
+      {/* {(combinedRestaurants.length > 0 || trip.restaurants.length > 0) && ( */}
       <div className='container mx-auto px-4 py-4' id='restaurants'>
         <div
           className={cn(
             'mb-4 flex  items-center',
-            combinedRestaurants.length > 0 || trip.restaurant
+            combinedRestaurants.length > 0 || trip.restaurants.length > 0
               ? 'justify-between'
               : 'justify-end'
           )}
         >
-          {(combinedRestaurants.length > 0 || trip.restaurant) && (
+          {(combinedRestaurants.length > 0 || trip.restaurants.length > 0) && (
             <div>
               <h2 className='text-2xl font-semibold md:font-bold text-gray-900'>
                 Restaurants
+                {trip.restaurants.length > 0 && (
+                  <span className='text-vineyard-500 ml-2 text-lg'>
+                    ({trip.restaurants.length}/{MAX_RESTAURANTS} selected)
+                  </span>
+                )}
               </h2>
             </div>
           )}
-          {!trip.restaurant && (
+          {trip.restaurants.length === 0 && (
             <Button
               className='bg-vineyard-500 hover:bg-vineyard-600'
               onClick={() => router.push('/explore/trip')}
@@ -270,7 +293,7 @@ export default function LunchPage() {
           </>
         ) : (
           <div className='text-center py-12'>
-            {!hasAllRequiredFilters && !trip.restaurant ? (
+            {!hasAllRequiredFilters && trip.restaurants.length === 0 ? (
               <></>
             ) : (
               <>
@@ -305,7 +328,55 @@ export default function LunchPage() {
       </div>
       {/* )} */}
 
-      {trip.restaurant && (
+      {/* Additional Recommendations Section */}
+      {additionalRestaurants.length > 0 && filteredRestaurants.length < 3 && (
+        <div
+          className='container mx-auto px-4 py-8'
+          id='additional-restaurants'
+        >
+          <div className='mb-6'>
+            <p className=''>
+              Here are {additionalRestaurants.length} additional options which
+              are close to your request
+            </p>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+            {additionalRestaurants.map((restaurant) => {
+              const isSelected = trip.restaurants.some(
+                (r) => r.restaurant.id === restaurant.id
+              );
+              return (
+                <div
+                  key={restaurant.id}
+                  className='relative opacity-90 hover:opacity-100 transition-opacity'
+                >
+                  {isSelected && (
+                    <div className='absolute -top-2 -left-2 z-10'>
+                      <div className='bg-vineyard-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm'>
+                        Selected
+                      </div>
+                    </div>
+                  )}
+                  <RestaurantCard
+                    restaurant={restaurant}
+                    onAddToTrip={handleAddToTrip}
+                    onRemoveFromTrip={handleRemoveFromTrip}
+                    isInTrip={isSelected}
+                    className={
+                      isSelected
+                        ? 'border-2 border-vineyard-200 bg-gradient-to-br from-vineyard-50 to-white'
+                        : 'border-gray-300'
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {trip.restaurants.length > 0 && (
         <div className='container mx-auto px-4 flex justify-end mt-4'>
           <Button
             className='bg-vineyard-500 hover:bg-vineyard-600'

@@ -18,7 +18,7 @@ export interface IPlan extends Document {
   userId: string;
   title?: string;
   vineyards: IPlanVineyard[];
-  restaurant?: IPlanRestaurant;
+  restaurants: IPlanRestaurant[];
   customOrder?: Array<{ id: string; order: number; type: 'vineyard' | 'restaurant' }>;
   // status: 'draft' | 'confirmed' | 'expired';  // Removed status field
   isActive: boolean;
@@ -80,13 +80,20 @@ const PlanSchema = new Schema<IPlan>(
       default: [],
       // validate: {
       //   validator: function(v: IPlanVineyard[]) {
-      //     return v.length <= 3; // Max 3 vineyards
+      //     return v.length <= 10; // Max 10 vineyards
       //   },
-      //   message: 'Maximum 3 vineyards allowed per plan'
+      //   message: 'Maximum 10 vineyards allowed per plan'
       // }
     },
-    restaurant: {
-      type: PlanRestaurantSchema,
+    restaurants: {
+      type: [PlanRestaurantSchema],
+      default: [],
+      // validate: {
+      //   validator: function(v: IPlanRestaurant[]) {
+      //     return v.length <= 3; // Max 3 restaurants
+      //   },
+      //   message: 'Maximum 3 restaurants allowed per plan'
+      // }
     },
     customOrder: {
       type: Array,
